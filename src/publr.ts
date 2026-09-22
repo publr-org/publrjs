@@ -72,6 +72,9 @@ export interface PublrRuntime {
   /** Generate an opaque client-side id for optimistic records. */
   randomId(): string;
 
+  /** Inside an attribute expression, the evaluating element's nearest `data-<name>`. */
+  dataset(name: string): string | undefined;
+
   /** Create one shared store and return its flattened state/action facade. */
   createStore<S extends State = State, A extends Actions = Actions>(
     name: string,
@@ -134,6 +137,8 @@ export const Publr: PublrRuntime = {
     return globalThis.crypto?.randomUUID?.() ?? `id-${Math.random().toString(36).slice(2, 18)}`;
   },
 
+  dataset,
+
   createStore,
 
   createLocalStore,
@@ -188,6 +193,7 @@ export {
   Repeat,
 } from "./intrinsics";
 export { Loading } from "./addons/dom";
+import { dataset } from "./addons/dom";
 
 start();
 

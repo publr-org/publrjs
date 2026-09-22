@@ -1,6 +1,8 @@
 import { setDirectiveValue } from "../core/directive-value";
 import { compiledFactory, structuralRootEnd } from "../core/component-metadata";
 import { className } from "../core/class-value";
+import { mergeClasses } from "./class-merge";
+import { unwrap } from "../core/reactive";
 import { containerFor } from "../core/container";
 import { withSeed, readSeed, type Seed } from "../core/transfer";
 // Small compiler target: specialized writes, shared ownership and reconciliation.
@@ -126,9 +128,63 @@ function writeAttribute(node: Element, name: string, value: unknown): void {
   else if (value == null || value === false) node.removeAttribute(name);
   else node.setAttribute(name, value === true ? "" : String(value));
 }
+// The element whose attribute is being evaluated, so `dataset()` can read that
+// element's own `data-<name>`, walking up the way the wire does.
+let evaluating: Element | null = null;
+const evaluate =
+  <T>(node: Element, read: () => T) =>
+  (): T => {
+    const previous = evaluating;
+    evaluating = node;
+    try {
+      return read();
+    } finally {
+      evaluating = previous;
+    }
+  };
+/** `Publr.dataset(name)` inside an attribute expression: the nearest `data-<name>`. */
+export function dataset(name: string): string | undefined {
+  // A first render evaluates an element before its parent adopts it, so the
+  // ancestor that carries the attribute is not reachable yet; the binding
+  // re-reads once the tree is placed.
+  if (evaluating && !evaluating.parentNode && !placed.has(evaluating)) {
+    attached.read();
+    placing.add(evaluating);
+    if (placing.size === 1)
+      queueMicrotask(() => {
+        for (const node of placing) placed.add(node);
+        placing.clear();
+        attached.write(untrack(() => attached.read()) + 1);
+      });
+  }
+  for (let node = evaluating; node; node = node.parentElement) {
+    const value = (node as HTMLElement).dataset?.[name];
+    if (value !== undefined) return value;
+  }
+  return undefined;
+}
+const attached = state(0);
+const placing = new Set<Element>();
+const placed = new WeakSet<Element>();
+// Elements whose visibility a binding owns. A `hidden={…}` binding and the show
+// wrapper both toggle the `hidden` class, as the wire's data-p-show does, so a
+// component's static `hidden` class is its closed state; a class re-render must
+// not restore that class while the element is shown.
+const visibility = new WeakMap<Element, boolean>();
+function setVisible(node: Element, shown: boolean): void {
+  visibility.set(node, shown);
+  node.classList.toggle("hidden", !shown);
+}
 export function attr(node: Element, name: string, read: () => unknown): void {
+  if (name === "hidden") {
+    render(evaluate(node, read), (value) => {
+      node.toggleAttribute("hidden", !!value);
+      setVisible(node, !value);
+    });
+    return;
+  }
   let initial = true;
-  render(read, (value) => {
+  render(evaluate(node, read), (value) => {
     if (initial) defaultControl(node, name, value);
     writeAttribute(node, name, value);
     initial = false;
@@ -142,16 +198,24 @@ export function reference(node: Element, ref: (element: Element | null) => void)
   ref(node);
   onCleanup(() => ref(null));
 }
+/** The class stack is merged the way the server merges it: a later utility
+ * replaces an earlier one it conflicts with. */
 export function classes(node: Element, read: () => unknown): void {
+  const reading = evaluate(node, read);
   render(
-    () => className(read()),
-    (value) => attribute(node, "class", value),
+    () => mergeClasses(className(reading())),
+    (value) => {
+      attribute(node, "class", value);
+      const shown = visibility.get(node);
+      if (shown !== undefined) node.classList.toggle("hidden", !shown);
+    },
   );
 }
 export function styles(node: Element, read: () => unknown): void {
+  const reading = evaluate(node, read);
   render(
     () => {
-      const value = read();
+      const value = reading();
       if (typeof value === "string") return value;
       return Object.entries((value ?? {}) as Record<string, unknown>)
         .map(([name, val]) => {
@@ -178,7 +242,7 @@ export function component<P>(make: Component<P>, props: P): Node {
   return untrack(() => make(props));
 }
 export function show<T extends Element>(node: T, read: () => unknown): T {
-  render(read, (value) => node.classList.toggle("hidden", !value));
+  render(evaluate(node, read), (value) => setVisible(node, !!value));
   return node;
 }
 
@@ -353,7 +417,29 @@ interface Row extends Mounted {
   range: Range;
   item: ReturnType<typeof state<any>>;
   index: ReturnType<typeof state<number>>;
+  value: unknown;
 }
+/** Plain data that reads the same. A region re-reads its list on every flush,
+ * so a source that builds fresh rows per read must not rewrite every row. */
+function equivalent(a: unknown, b: unknown, depth = 0): boolean {
+  a = unwrap(a);
+  b = unwrap(b);
+  if (Object.is(a, b)) return true;
+  if (depth > 8 || typeof a !== "object" || typeof b !== "object" || !a || !b) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (!Array.isArray(a) && (!plain(a) || !plain(b))) return false;
+  const left = a as Record<string, unknown>;
+  const right = b as Record<string, unknown>;
+  const keys = Object.keys(left);
+  if (keys.length !== Object.keys(right).length) return false;
+  return keys.every(
+    (key) => Object.hasOwn(right, key) && equivalent(left[key], right[key], depth + 1),
+  );
+}
+const plain = (value: object): boolean => {
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+};
 export function list<T>(
   read: () => ArrayLike<T> | null | undefined,
   key: (item: T, index: number) => unknown,
@@ -384,7 +470,10 @@ export function list<T>(
           let row = prepared.get(id) ?? rows.get(id);
           if (row) {
             if (row.scope.paused) resumeScope(row.scope);
-            row.item.write(values[index]);
+            if (!equivalent(row.value, values[index])) {
+              row.value = values[index];
+              row.item.write(values[index]);
+            }
             row.index.write(index);
           } else {
             const rowRange = range(`row:${rowKey(id)}`);
@@ -403,6 +492,7 @@ export function list<T>(
               range: rowRange,
               item,
               index: position,
+              value: values[index],
             };
           }
           next.set(id, row);
@@ -606,6 +696,31 @@ export function hydrate<P>(
 }
 export { render };
 
+/** One child value as a node: a node itself, a thunk as its own region, text otherwise. */
+function child(value: unknown): Node {
+  if (typeof value === "function") return insert(value as () => unknown);
+  if (value && typeof value === "object" && "nodeType" in value) return value as Node;
+  return literal(value);
+}
+/** The compiler hands several children as an array, with a thunk for each
+ * reactive expression among them. Under a hydration cursor each child has
+ * already claimed its place, so only a fresh render collects them. */
+function children(value: unknown): Node {
+  if (!Array.isArray(value)) return child(value);
+  const output = doc().createDocumentFragment();
+  for (const item of value.flat(Infinity) as unknown[]) {
+    if (item == null || typeof item === "boolean") continue;
+    const node = child(item);
+    if (!cursor) output.append(node);
+  }
+  return output;
+}
+const sameChildren = (a: unknown, b: unknown): boolean =>
+  Object.is(a, b) ||
+  (Array.isArray(a) &&
+    Array.isArray(b) &&
+    a.length === b.length &&
+    a.every((item, index) => sameChildren(item, b[index])));
 /** Unknown child values need a shared dynamic region; known structure is emitted directly. */
 export function insert(read: () => unknown): Node {
   // JSX expression markers also represent empty text. Node-valued expressions
@@ -615,15 +730,13 @@ export function insert(read: () => unknown): Node {
   let previous: unknown = Symbol();
   let initial = true;
   render(read, (value) => {
-    if (Object.is(previous, value)) return;
-    const make = () => {
-      if (value && typeof value === "object" && "nodeType" in value) return value as Node;
-      return literal(value);
-    };
+    if (sameChildren(previous, value)) return;
+    const make = () => children(value);
     if (
       mounted?.nodes.length === 1 &&
       mounted.nodes[0].nodeType === 3 &&
-      !(value && typeof value === "object")
+      !(value && typeof value === "object") &&
+      typeof value !== "function"
     ) {
       (mounted.nodes[0] as Text).data = display(value);
     } else {
