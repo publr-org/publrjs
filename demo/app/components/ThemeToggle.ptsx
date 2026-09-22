@@ -1,0 +1,34 @@
+import { state, effect } from "publr";
+
+export function ThemeToggle() {
+  let dark = state(document.documentElement.dataset.theme === "dark");
+  function toggleTheme() {
+    dark = !dark;
+    const theme = dark ? "dark" : "light";
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("publr:theme", theme);
+    } catch {}
+    window.dispatchEvent(new Event("publr:theme-change"));
+  }
+  effect(() => {
+    const sync = () => {
+      dark = document.documentElement.dataset.theme === "dark";
+    };
+    window.addEventListener("publr:theme-change", sync);
+    return () => window.removeEventListener("publr:theme-change", sync);
+  });
+  return (
+    <button
+      id="theme-toggle"
+      class="theme-toggle"
+      type="button"
+      aria-label="Dark mode"
+      aria-pressed={dark}
+      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      onClick={toggleTheme}
+    >
+      <span aria-hidden="true">{dark ? "☀" : "☾"}</span>
+    </button>
+  );
+}

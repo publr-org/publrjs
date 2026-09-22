@@ -1,0 +1,116 @@
+.debugger-scene {
+  display: contents;
+}
+.source .walkthrough-file-tabs {
+  position: relative;
+}
+.source .walkthrough-file-tablist {
+  margin: 0;
+  padding: 0 1.2rem;
+}
+.source .walkthrough-file-tab {
+  padding: 0.8rem 0;
+  margin-right: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+#sharing-guide-count:empty {
+  display: none;
+}
+.lesson-instances {
+  display: grid;
+  gap: 1.5rem;
+  width: 100%;
+} /* Shared live HTML inspection for every tutorial walkthrough. */
+.lesson-code {
+  min-width: 0;
+  width: 100%;
+  text-align: left;
+  margin: 20px 0 24px;
+}
+.lesson-code label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.lesson-code p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--theme-muted, #586171);
+}
+.lesson-code pre {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+  max-height: 320px;
+  background: var(--theme-surface, #f7f8fc);
+  border: 1px solid var(--theme-line, #d8dce7);
+  border-radius: 5px;
+  line-height: 1.6;
+  white-space: pre;
+  margin: 0;
+  padding: 16px;
+  font-size: 13px;
+}
+.lesson-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.lesson-code-header label,
+.lesson-code-header p {
+  margin: 0;
+}
+.lesson-code-header p {
+  text-align: right;
+}
+@media (min-width: 1150px) {
+  #walkthrough.live-code-demo[open]:has(.lesson-code input:checked) {
+    width: min(1280px, calc(100vw - 48px));
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 20px;
+  }
+  #walkthrough.live-code-demo > .walkthrough-header,
+  #walkthrough.live-code-demo > .walkthrough-copy,
+  #walkthrough.live-code-demo > .walkthrough-footer {
+    grid-column: 1 / -1;
+  }
+  #walkthrough.live-code-demo:has(.lesson-code input:checked) .page-debugger-content {
+    grid-column: 1;
+    margin-top: 28px;
+    min-width: 0;
+  }
+  #walkthrough.live-code-demo:has(.lesson-code input:checked) .lesson-code {
+    grid-column: 2;
+    display: grid;
+    grid-template-rows: 28px minmax(0, 1fr);
+    margin: 0 0 24px;
+  }
+  #walkthrough.live-code-demo .lesson-code .lesson-code-panel {
+    min-height: 0;
+    contain: size;
+  }
+  #walkthrough.live-code-demo .lesson-code pre {
+    height: 100%;
+    max-height: none;
+  }
+}
+@media (max-width: 600px) {
+  .lesson-code-header {
+    gap: 8px;
+  }
+  .lesson-code-header label {
+    flex-shrink: 0;
+  }
+  .lesson-code-header p {
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,35 @@
+import { state, ref, effect } from "publr";
+import { trapFocus } from "publr/focus";
+
+export function FocusDetails() {
+  const trigger = ref<HTMLButtonElement>();
+  const panel = ref<HTMLElement>();
+  let open = state(false);
+  let thanks = state(0);
+
+  function showDetails() { open = true; }
+  function closeDetails() { open = false; }
+  function thankAda() { thanks++; }
+
+  effect(() => {
+    if (open && panel.current) {
+      return trapFocus(panel.current);
+    }
+  });
+
+  return (
+    <section class="focus-card" inert={open}>
+      <h3>Ada Chen</h3>
+      <p>Thanks: {thanks}</p>
+      <button ref={trigger} onClick={showDetails} aria-expanded={open}>Open details</button>
+      <aside ref={panel} portal position={{ anchor: trigger, placement: "bottom-start", offset: 8 }}
+        hidden={!open} class="focus-panel" role="dialog" aria-modal="true"
+        aria-label="Ada’s details" onDismiss={closeDetails}>
+        <h3>Ada Chen</h3>
+        <p>Product designer</p>
+        <button onClick={thankAda}>Thank Ada</button>
+        <button onClick={closeDetails}>Close details</button>
+      </aside>
+    </section>
+  );
+}

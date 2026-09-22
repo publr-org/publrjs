@@ -1,0 +1,14 @@
+import { createLocalStore, awaited } from "publr";
+import { findPeople } from "./request.js";
+
+createLocalStore("PeopleSearch", ({ state }) => ({
+  state: {
+    search: "",
+    people: awaited(() => findPeople(state.search))
+  },
+  actions: {
+    updateSearch(_data, { event }) {
+      state.search = event.currentTarget.value;
+    }
+  }
+}));

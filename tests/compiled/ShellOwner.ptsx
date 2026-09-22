@@ -1,0 +1,13 @@
+import { state, Show } from "publr";
+import { StaticShell } from "./StaticShell.ptsx";
+
+export function ShellOwner() {
+  let visible = state(true);
+  function toggle() { visible = !visible; }
+  return (
+    <main>
+      <button onClick={toggle}>Toggle shell</button>
+      <Show when={visible}><StaticShell /></Show>
+    </main>
+  );
+}

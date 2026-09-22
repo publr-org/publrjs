@@ -1,0 +1,18 @@
+import { state, derived } from "publr";
+
+export function DerivedCounter() {
+  let count = state(0);
+  const doubled = derived(() => count * 2);
+
+  function increment() {
+    count++;
+  }
+
+  return (
+    <div class="lesson-counter lesson-derived">
+      <label>Count <output aria-label="Count">{count}</output></label>
+      <label>Doubled <output aria-label="Doubled">{doubled}</output></label>
+      <button onClick={increment}>Increment</button>
+    </div>
+  );
+}

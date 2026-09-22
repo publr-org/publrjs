@@ -1,0 +1,39 @@
+import { state } from "publr";
+import type { Annotation } from "../walkthrough/content";
+import { formatPreviewHTML } from "../code/format-html";
+import { CodeText } from "./CodeText.ptsx";
+export function CodeInspector(props: {
+  html: string | null;
+  annotation?: Annotation;
+  caption?: string;
+}) {
+  let visible = state(true);
+  return (
+    <div class={"lesson-code awaited-code" + (props.html === null ? "" : " is-generated")}>
+      <div class="lesson-code-header awaited-code-header">
+        <label>
+          <input
+            type="checkbox"
+            checked={visible}
+            onChange={(event) => (visible = event.currentTarget.checked)}
+          />
+          Show code
+        </label>
+        <p hidden={!visible}>{props.caption ?? "Current app HTML · updates live"}</p>
+      </div>
+      <div class="lesson-code-panel awaited-code-panel" hidden={!visible}>
+        <pre class="walkthrough-code" tabIndex={0} aria-label="Current app HTML">
+          <CodeText
+            source={
+              props.html === null
+                ? "No response yet. Load the page to see its HTML."
+                : formatPreviewHTML(props.html) || "The app is empty."
+            }
+            label={props.html === null ? "plain.zig" : "HTML"}
+            annotation={props.annotation}
+          />
+        </pre>
+      </div>
+    </div>
+  );
+}

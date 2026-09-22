@@ -1,0 +1,52 @@
+{
+  "name": "publr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Compiled reactive components, native SSR hydration, and shared HTML/JavaScript state.",
+  "type": "module",
+  "sideEffects": [
+    "**/*.behavior.js",
+    "./src/publr.ts",
+    "./dist/publr.js"
+  ],
+  "exports": {
+    ".": "./src/publr.ts",
+    "./runtime": "./src/runtime.ts",
+    "./dom": "./src/addons/dom.ts",
+    "./transport": "./src/transport.ts",
+    "./query": "./src/addons/query.ts",
+    "./router": "./src/addons/router.ts",
+    "./class-merge": "./src/addons/class-merge.ts",
+    "./focus": "./src/addons/focus.ts",
+    "./position": "./src/addons/position.ts",
+    "./html": "./src/html.ts"
+  },
+  "scripts": {
+    "build": "vp build",
+    "check": "vp check",
+    "test": "vp test run",
+    "watch": "vp build --watch",
+    "fixtures": "node scripts/compile-fixtures.mjs",
+    "sizes": "node scripts/measure-rewrite.mjs",
+    "check:ptsx": "node ../pjsx/scripts/check-types.mjs tests/compiled",
+    "test:browser": "node scripts/browser-rewrite.mjs",
+    "verify": "npm run fixtures && npm run check:ptsx && npm run check && npm run build && npm test && npm run sizes && npm run test:browser && npm run test:prerequisites",
+    "demo:build": "node demo/build.mjs",
+    "demo": "npm run demo:build && node demo/server/serve.mjs",
+    "demo:test": "node demo/tests/test-request-gates.mjs && node demo/tests/test-lessons.mjs && node demo/tests/test.mjs && node demo/tests/test-reuse.mjs && node demo/tests/test-awaited.mjs && node demo/tests/test-failure.mjs && node demo/tests/test-query-data.mjs && node demo/tests/test-query.mjs && node demo/tests/test-portals.mjs && node demo/tests/test-position.mjs && node demo/tests/test-focus.mjs && node demo/tests/test-code-previews.mjs && node demo/tests/test-sidebar.mjs && node demo/tests/test-highlighting.mjs && node demo/tests/test-theme.mjs",
+    "test:prerequisites": "node scripts/check-authoring.mjs && node scripts/check-request-isolation.mjs && node scripts/prerequisites-browser.mjs && node scripts/focus-browser.mjs"
+  },
+  "devDependencies": {
+    "@types/prismjs": "^1.26.6",
+    "happy-dom": "^20.10.6",
+    "prismjs": "^1.30.0",
+    "vite-plus": "^0.2.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": ">=11",
+      "onFail": "download"
+    }
+  }
+}

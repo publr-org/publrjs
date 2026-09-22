@@ -1,0 +1,140 @@
+/* Lesson 4: keep the two values visible beside their action. */
+.lesson-derived {
+  flex-wrap: wrap;
+}
+.lesson-derived label {
+  display: grid;
+  gap: 0.3rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted, var(--theme-muted, #586171));
+}
+.lesson-derived output {
+  color: var(--theme-ink, #20232a);
+}
+.walkthrough-code mark.derived-highlight {
+  background: var(--theme-amber-surface, #fff0cd);
+  color: var(--theme-amber-ink, #8b5900);
+}
+.effect-preview {
+  display: block;
+  width: 100%;
+  height: 165px;
+  border: 0;
+  border-radius: 5px;
+  background: white;
+}
+.result:has(.effect-preview),
+.walkthrough-demo:has(.effect-preview) {
+  padding: 0;
+}
+.lesson-conditional {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  min-height: 100px;
+}
+.lesson-conditional p {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.lesson-list {
+  width: 100%;
+  max-width: 320px;
+}
+.lesson-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.lesson-list-actions button {
+  padding-inline: 0.75rem;
+}
+.lesson-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  min-height: 76px;
+  text-align: left;
+}
+.lesson-list li {
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--theme-line, #e1e4ec);
+  font-size: 1rem;
+}
+.lesson-input,
+.lesson-ref,
+.lesson-switch {
+  width: 100%;
+  max-width: 260px;
+  display: grid;
+  gap: 1rem;
+  text-align: left;
+}
+.lesson-input {
+  justify-items: start;
+}
+.lesson-input label,
+.lesson-ref label,
+.lesson-switch label {
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--theme-muted, #586171);
+}
+.lesson-input label {
+  width: 100%;
+}
+.lesson-input input,
+.lesson-ref input,
+.lesson-switch select {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--theme-line, #cdd3e1);
+  border-radius: 5px;
+  color: var(--theme-ink, #20232a);
+  background: white;
+  font: inherit;
+  font-size: 1rem;
+}
+.lesson-input input:focus-visible,
+.lesson-ref input:focus,
+.lesson-switch select:focus-visible {
+  outline: 2px solid var(--theme-blue-line, #3447b2);
+  outline-offset: 2px;
+}
+.lesson-input p {
+  margin: 0;
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
+}
+.lesson-switch p {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: 1.15rem;
+}
+.lesson-ref {
+  justify-items: start;
+}
+.lesson-ref label {
+  width: 100%;
+}
+.lesson-cleanup {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  min-height: 100px;
+}
+.lesson-cleanup p {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.lesson-timer output {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}

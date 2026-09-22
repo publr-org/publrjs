@@ -1,0 +1,7 @@
+export function Hello() {
+  function greet() {
+    alert("Hello from Publr");
+  }
+
+  return <button onClick={greet}>Hello</button>;
+}

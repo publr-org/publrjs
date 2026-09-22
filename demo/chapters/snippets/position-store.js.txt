@@ -1,0 +1,18 @@
+import { createLocalStore, ref } from "publr";
+
+createLocalStore("AnchoredDetails", () => {
+  const trigger = ref();
+  return {
+    refs: { trigger },
+    state: {
+      open: false,
+      thanks: 0,
+      position: { anchor: trigger, placement: "bottom-start", offset: 8 }
+    },
+    actions: ({ state }) => ({
+      showDetails() { state.open = true; },
+      closeDetails() { state.open = false; },
+      thankAda() { state.thanks++; }
+    })
+  };
+});

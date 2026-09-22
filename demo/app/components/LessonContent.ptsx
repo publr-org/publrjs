@@ -1,0 +1,121 @@
+import { effect, ref } from "publr";
+import type { Content, Inline, Snippet, Group } from "../walkthrough/content";
+import { tabSelection, tabKey, type TabSelection } from "../walkthrough/tabs";
+import { Term } from "./Term.ptsx";
+import { CodeText } from "./CodeText.ptsx";
+let nextFiles = 0;
+
+export function InlineContent(props: { parts: Inline[] }) {
+  return (
+    <>
+      {props.parts.map((part) => (
+        <>
+          {typeof part === "string" ? (
+            <span>{part}</span>
+          ) : part.kind === "term" ? (
+            <Term text={part.text} definition={part.definition} />
+          ) : (
+            <code>{part.text}</code>
+          )}
+        </>
+      ))}
+    </>
+  );
+}
+export function CodeLegend() {
+  return (
+    <div class="code-legend" aria-label="How to read the code examples">
+      <span class="code-legend-authored">Plain: you write it.</span>
+      <span class="code-legend-generated">Striped: PJSX generates it.</span>
+    </div>
+  );
+}
+export function LessonContent(props: { key?: number; content: Content[]; tabs?: TabSelection }) {
+  const content = props.content;
+  return (
+    <>
+      {content.map((item) => (
+        <ContentBlock item={item} tabs={props.tabs} />
+      ))}
+    </>
+  );
+}
+export function ContentBlock(props: { item: Content; tabs?: TabSelection; hideLabel?: boolean; plain?: boolean }) {
+  const item = props.item;
+  return (
+    <>
+      {item.kind === "paragraph" ? (
+        <p class="compare-description">
+          <InlineContent parts={item.parts} />
+        </p>
+      ) : item.kind === "files" ? (
+        <FileTabs files={item.files} selection={props.tabs} />
+      ) : item.kind === "group" ? (
+        <div class={item.className}>
+          <LessonContent content={item.children} tabs={props.tabs} />
+        </div>
+      ) : (
+        <div class={"walkthrough-code-card" + (item.generated ? " is-generated" : " is-authored")}>
+          {!props.hideLabel && <p class="walkthrough-code-label">{item.label}</p>}
+          {item.description && <p class="compare-description">{item.description}</p>}
+          <pre class={props.plain ? null : "walkthrough-code"} tabIndex={0} aria-label={item.label}>
+            <CodeText source={item.source} label={item.label} annotation={item.annotation} />
+          </pre>
+          <LessonContent content={item.children} tabs={props.tabs} />
+        </div>
+      )}
+    </>
+  );
+}
+export function FileTabs(props: {
+  files: { name: string; card: Snippet | Group }[];
+  selection?: TabSelection;
+  idPrefix?: string;
+  plain?: boolean;
+}) {
+  const files = props.files;
+  const root = ref<HTMLDivElement>();
+  const id = props.idPrefix ?? "files-" + ++nextFiles;
+  const tabs = props.selection ?? tabSelection();
+  tabs.register(id, files.length);
+  effect(() => () => {
+    delete tabs.selection.sizes[id];
+  });
+  function keydown(event: KeyboardEvent, index: number) {
+    const next = tabKey(event, index, files.length);
+    if (next === null) return;
+    tabs.select(id, next);
+    root.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next].focus();
+  }
+  return (
+    <div ref={root} class="walkthrough-file-tabs">
+      <div class="walkthrough-file-tablist" role="tablist" aria-label="Example files">
+        {files.map((file, index) => (
+          <button
+            class="walkthrough-file-tab"
+            type="button"
+            id={id + "-tab-" + index}
+            role="tab"
+            aria-controls={id + "-panel-" + index}
+            aria-selected={tabs.index(id) === index}
+            tabIndex={tabs.index(id) === index ? 0 : -1}
+            onClick={() => tabs.select(id, index)}
+            onKeyDown={(event) => keydown(event, index)}
+          >
+            {file.name}
+          </button>
+        ))}
+      </div>
+      {files.map((file, index) => (
+        <div
+          id={id + "-panel-" + index}
+          role="tabpanel"
+          aria-labelledby={id + "-tab-" + index}
+          hidden={tabs.index(id) !== index}
+        >
+          <ContentBlock item={file.card} tabs={tabs} hideLabel={true} plain={props.plain} />
+        </div>
+      ))}
+    </div>
+  );
+}

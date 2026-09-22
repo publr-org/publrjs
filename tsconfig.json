@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "paths": {
+      "publr": ["./src/publr.ts"],
+      "publr/dom": ["./src/addons/dom.ts"],
+      "publr/router": ["./src/addons/router.ts"],
+      "publr/html": ["./src/html.ts"]
+    },
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "preserve",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src", "tests", "vite.config.ts", "demo/**/*.ts"]
+}

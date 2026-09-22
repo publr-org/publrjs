@@ -1,0 +1,6 @@
+import { state } from "publr";
+export function TableRow() {
+  let count = state(0);
+  function increment() { count++; }
+  return <tr><td><button onClick={increment}>+</button></td><td>{count}</td></tr>;
+}

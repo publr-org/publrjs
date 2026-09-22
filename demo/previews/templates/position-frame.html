@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Position preview</title>
+    <link rel="stylesheet" href="/introduction.css" />
+    <link rel="stylesheet" href="/portals.css" />
+    <link rel="stylesheet" href="/position.css" />
+    <script src="/theme-init.js"></script>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="portal-frame position-frame">
+    <div class="position-controls" hidden>
+      <p>Move trigger</p>
+      <button type="button" data-move="top">Top</button>
+      <button type="button" data-move="bottom">Bottom</button>
+      <button type="button" data-move="right">Right edge</button>
+    </div>
+    <div class="position-stage" tabindex="0" aria-label="Scrollable scene">
+      <div class="position-canvas">
+        <div id="preview" data-p-activation="manual"></div>
+      </div>
+    </div>
+    <p class="position-status" role="status">Open details to see its placement.</p>
+    <script type="module" src="/position-frame.js"></script>
+  </body>
+</html>

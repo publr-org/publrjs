@@ -1,0 +1,45 @@
+.walkthrough-term {
+  position: relative;
+  display: inline;
+}
+.walkthrough-term-trigger {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+  cursor: help;
+}
+.walkthrough-term-trigger:focus-visible {
+  outline: 2px solid var(--theme-blue-line, #3048a6);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.walkthrough-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(245px, 65vw);
+  padding: 0.65rem 0.8rem;
+  color: #fff;
+  background: var(--theme-blue-surface, #293249);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px #17203b25;
+  font:
+    0.8125rem/1.5 system-ui,
+    sans-serif;
+  text-align: left;
+}
+.walkthrough-term:hover .walkthrough-tooltip,
+.walkthrough-term:focus-within .walkthrough-tooltip,
+.walkthrough-term.is-open .walkthrough-tooltip {
+  display: block;
+}
+.walkthrough-term:last-of-type .walkthrough-tooltip {
+  left: auto;
+  right: 0;
+}

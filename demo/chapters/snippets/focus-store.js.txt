@@ -1,0 +1,27 @@
+import { createLocalStore, ref, effect } from "publr";
+import { trapFocus } from "publr/focus";
+
+createLocalStore("FocusDetails", ({ state }) => {
+  const trigger = ref();
+  const panel = ref();
+  return {
+    refs: { trigger, panel },
+    state: {
+      open: false,
+      thanks: 0,
+      position: { anchor: trigger, placement: "bottom-start", offset: 8 }
+    },
+    init() {
+      effect(() => {
+        if (state.open && panel.current) {
+          return trapFocus(panel.current);
+        }
+      });
+    },
+    actions: ({ state }) => ({
+      showDetails() { state.open = true; },
+      closeDetails() { state.open = false; },
+      thankAda() { state.thanks++; }
+    })
+  };
+});

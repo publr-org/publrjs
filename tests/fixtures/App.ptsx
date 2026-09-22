@@ -1,0 +1,10 @@
+import { Counter } from "./Counter.ptsx";
+import { ui } from "./state";
+
+export function App() {
+  return (
+    <div>
+      <Counter initial={3} label={ui.label} />
+    </div>
+  );
+}

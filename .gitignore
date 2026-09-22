@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.DS_Store
+tests/compiled/.zig-cache/
+tests/compiled/zig-out/
+tests/compiled/bundles/
+demo/.zig-cache/
+demo/zig-out/
+demo/dist/
+tests/html/.zig-cache/
+tests/html/zig-out/
+demo/.generated/
+
+# Open work, kept locally
+ROUTER-PLAN.md
+docs/tutorial-progress.md
+docs/tutorial-presentation-plan.md

@@ -1,0 +1,190 @@
+import { ThemeHead } from "../components/ThemeHead.ptsx";
+
+export function LearnPage() {
+  return (
+    <html lang={"en"}>
+      <head>
+        <meta charset={"UTF-8"} />
+        <meta name={"viewport"} content={"width=device-width, initial-scale=1"} />
+        <title>
+          {"__PUBLR_SLOT_TITLE__"}
+          {" · Publr examples"}
+        </title>
+        <link rel={"stylesheet"} href={"/learn.css"} />
+        <ThemeHead />
+      </head>
+      <body data-lesson={"__PUBLR_SLOT_LESSON__"}>
+        <header class={"site-header"}>
+          <a href={"/"}>
+            {"publr"}
+            <span>{" / examples"}</span>
+          </a>
+          <a href={"/combined"}>{"Open combined demo ↗"}</a>
+        </header>
+        <div class={"layout"}>
+          <nav class={"lesson-nav"} aria-label={"Examples"}>
+            <p>{"START HERE"}</p>
+            {"__PUBLR_SLOT_NAV__"}
+            <div class={"nav-note"}>
+              {"Each example is a separate page. Only the selected example runs."}
+            </div>
+          </nav>
+          <main>
+            <header class={"lesson-heading"}>
+              <p class={"kicker"}>
+                {" EXAMPLE "}
+                {"__PUBLR_SLOT_NUMBER__"}
+                {" / 06 "}
+              </p>
+              <h1>{"__PUBLR_SLOT_TITLE__"}</h1>
+              <p>{"__PUBLR_SLOT_DESCRIPTION__"}</p>
+            </header>
+            <ol class={"steps"}>{"__PUBLR_SLOT_STEPS__"}</ol>
+            <div class={"workbench"}>
+              <section class={"preview-panel"} aria-labelledby={"preview-heading"}>
+                <div class={"panel-heading"}>
+                  <h2 id={"preview-heading"}>{"Running example"}</h2>
+                  <a href={"__PUBLR_SLOT_RESET__"}>{"Reset page ↻"}</a>
+                </div>
+                <div class={"preview-body"}>
+                  <p class={"initial-note"}>{"__PUBLR_SLOT_INITIAL__"}</p>
+                  <div id={"example"}>{"__PUBLR_SLOT_EXAMPLE__"}</div>
+                  <div id="example-controls">
+                    <p id={"empty-host"} hidden>
+                      {"The host is empty."}
+                    </p>
+                    <button id={"start"} class={"primary"}>
+                      {"__PUBLR_SLOT_ACTION__"}
+                    </button>
+                    <p id={"status"} role={"status"}>
+                      {"Paused. Inspect the initial HTML, then start."}
+                    </p>
+                  </div>
+                </div>
+                <div class={"inspect-recipe"}>
+                  <h3>{"In DevTools"}</h3>
+                  <p>{"__PUBLR_SLOT_DEVTOOLS__"}</p>
+                  <code>{"__PUBLR_SLOT_SELECTOR__"}</code>
+                </div>
+                <div class={"document-line"}>
+                  {" Document "}
+                  <code id={"document-id"}>{"__PUBLR_SLOT_DOCUMENT-ID__"}</code>
+                  <span>{"New ID = new page load"}</span>
+                </div>
+              </section>
+              <section class={"inspection-panel"} aria-label={"Example inspector"}>
+                <div class={"inspection-tabs"} role={"tablist"} aria-label={"Inspect example"}>
+                  <button
+                    role={"tab"}
+                    id={"tab-source"}
+                    aria-controls={"panel-source"}
+                    aria-selected={"true"}
+                    tabindex={"0"}
+                    data-panel={"source"}
+                  >
+                    {" Source "}
+                  </button>
+                  <button
+                    role={"tab"}
+                    id={"tab-response"}
+                    aria-controls={"panel-response"}
+                    aria-selected={"false"}
+                    tabindex={"-1"}
+                    data-panel={"response"}
+                  >
+                    {" Response HTML "}
+                  </button>
+                  <button
+                    role={"tab"}
+                    id={"tab-dom"}
+                    aria-controls={"panel-dom"}
+                    aria-selected={"false"}
+                    tabindex={"-1"}
+                    data-panel={"dom"}
+                  >
+                    {" Live DOM "}
+                  </button>
+                  <button
+                    role={"tab"}
+                    id={"tab-requests"}
+                    aria-controls={"panel-requests"}
+                    aria-selected={"false"}
+                    tabindex={"-1"}
+                    data-panel={"requests"}
+                  >
+                    {" Requests "}
+                    <span id={"request-count"}>{"0"}</span>
+                  </button>
+                </div>
+                <div id={"panel-source"} role={"tabpanel"} aria-labelledby={"tab-source"}>
+                  <div class={"source-toolbar"}>
+                    <label class={"sr-only"} for={"source-file"}>
+                      {"Source file"}
+                    </label>
+                    <select id={"source-file"}>{"__PUBLR_SLOT_FILES__"}</select>
+                    <a id={"source-link"} target={"_blank"} rel={"noopener"}>
+                      {"Open file ↗"}
+                    </a>
+                  </div>
+                  <pre>
+                    <code id={"source-code"}>{"Loading source…"}</code>
+                  </pre>
+                </div>
+                <div
+                  id={"panel-response"}
+                  role={"tabpanel"}
+                  aria-labelledby={"tab-response"}
+                  hidden
+                >
+                  <p class={"panel-note"}>
+                    {
+                      " The example’s HTML from this document response, captured before activation. This snapshot stays unchanged. "
+                    }
+                  </p>
+                  <pre>
+                    <code id={"response-code"} />
+                  </pre>
+                </div>
+                <div id={"panel-dom"} role={"tabpanel"} aria-labelledby={"tab-dom"} hidden>
+                  <p class={"panel-note"}>
+                    {" The current contents of "}
+                    <code>{"#example"}</code>
+                    {". Updates as the example changes. "}
+                  </p>
+                  <pre>
+                    <code id={"dom-code"} />
+                  </pre>
+                </div>
+                <div
+                  id={"panel-requests"}
+                  role={"tabpanel"}
+                  aria-labelledby={"tab-requests"}
+                  hidden
+                >
+                  <p class={"panel-note"}>
+                    {" Only this example’s native operation calls ("}
+                    <code>{"/_publr/"}</code>
+                    {"). For full-page requests, use DevTools Network → Doc. "}
+                  </p>
+                  <p id={"no-requests"}>{"No operation requests."}</p>
+                  <ol id={"requests"} />
+                </div>
+              </section>
+            </div>
+            <footer>
+              <span>{"__PUBLR_SLOT_TAKEAWAY__"}</span>
+              <a href={"__PUBLR_SLOT_NEXT-URL__"}>
+                {"__PUBLR_SLOT_NEXT-LABEL__"}
+                {" →"}
+              </a>
+            </footer>
+          </main>
+        </div>
+        <script id={"response-html"} type={"application/json"}>
+          {" __PUBLR_SLOT_RESPONSE-JSON__ "}
+        </script>
+        <script type={"module"} src={"/learn.js"} />
+      </body>
+    </html>
+  );
+}

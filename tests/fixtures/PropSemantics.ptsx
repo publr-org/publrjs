@@ -1,0 +1,49 @@
+let defaultCalls = 0;
+
+function defaultValue() {
+  defaultCalls += 1;
+  return 1.25;
+}
+
+export function resetDefaultCalls() {
+  defaultCalls = 0;
+}
+
+export function getDefaultCalls() {
+  return defaultCalls;
+}
+
+type Props = {
+  value?: number | null;
+  enabled?: boolean;
+  label?: string;
+  count?: number;
+  live?: { label: string };
+  items?: { label?: string; enabled?: boolean }[];
+};
+
+export function PropSemantics({
+  value = defaultValue(),
+  enabled,
+  label,
+  count,
+  live = { label: "Live" },
+  items = [],
+}: Props) {
+  return (
+    <section>
+      <output>{value}</output>
+      <span data-live>{live.label}</span>
+      {enabled && <b data-enabled>Enabled</b>}
+      {label && <b data-label>{label}</b>}
+      {count && <b data-count>{count}</b>}
+      {items.map((item) => (
+        <div data-row>
+          {item.label && <i data-row-label>{item.label}</i>}
+          {item.enabled && <i data-row-enabled>Enabled</i>}
+          {label && <i data-outer-label>{label}</i>}
+        </div>
+      ))}
+    </section>
+  );
+}

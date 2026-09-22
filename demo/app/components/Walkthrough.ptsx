@@ -1,0 +1,173 @@
+import { state, effect, ref, derived } from "publr";
+import type { TutorialSession } from "../walkthrough/session";
+import { tabSelection } from "../walkthrough/tabs";
+import { CodeLegend, LessonContent, InlineContent } from "./LessonContent.ptsx";
+import { PageDebugger } from "./PageDebugger.ptsx";
+export function Walkthrough(props: { session: TutorialSession }) {
+  const dialog = ref<HTMLDialogElement>();
+  const title = ref<HTMLHeadingElement>();
+  const next = ref<HTMLButtonElement>();
+  let step = state(0);
+  let tabs = state(tabSelection());
+  const header = derived(() => {
+    if (step === 2) return ["Step through a page load."];
+    if (
+      props.session.options.stateLesson ||
+      props.session.options.sharedLesson ||
+      props.session.options.compositionLesson
+    )
+      return [];
+    const first = props.session.presentation.content(step, props.session.walkthrough === "zig")[0];
+    return first.kind === "paragraph" ? first.parts : [];
+  });
+  function focusHeading() {
+    const options = props.session.options;
+    if (!(options.awaitedLesson || options.portalLesson || options.reuseLesson || options.listLesson || options.inputLesson || options.switchLesson || options.refLesson || options.cleanupLesson || options.propsLesson || options.compositionLesson)) return;
+    queueMicrotask(() => {
+      if (!dialog.current?.open) return;
+      title.current?.focus({preventScroll: true});
+      dialog.current.scrollTop = 0;
+    });
+  }
+  function reset() {
+    step = 0;
+    tabs = tabSelection();
+  }
+  effect(() => {
+    if (props.session.walkthrough) {
+      reset();
+      dialog.current!.showModal();
+      focusHeading();
+      document.body.classList.add("walkthrough-open");
+    } else {
+      dialog.current?.close();
+      document.body.classList.remove("walkthrough-open");
+    }
+  });
+  function close() {
+    props.session.walkthrough = null;
+    props.session.returnFocus();
+  }
+  function advance() {
+    if (tabs.move(1)) return;
+    if (step === 2) close();
+    else {
+      step++;
+      tabs = tabSelection();
+      focusHeading();
+    }
+  }
+  function back() {
+    if (tabs.move(-1)) return;
+    if (step === 2) reset();
+    else {
+      step = Math.max(0, step - 1);
+      tabs = tabSelection();
+    }
+    if (step === 0) next.current?.focus();
+    focusHeading();
+  }
+  function backdrop(input: Event) {
+    const event = input as MouseEvent;
+    if (event.target !== dialog.current) return;
+    const bounds = dialog.current.getBoundingClientRect();
+    if (
+      event.clientX < bounds.left ||
+      event.clientX > bounds.right ||
+      event.clientY < bounds.top ||
+      event.clientY > bounds.bottom
+    )
+      close();
+  }
+  return (
+    <dialog
+      ref={dialog}
+      id="walkthrough"
+      class={"walkthrough" + (step === 2 ? " live-code-demo" : "")}
+      aria-labelledby="walkthrough-title"
+      aria-describedby="walkthrough-description"
+      onClose={close}
+      onClick={backdrop}
+    >
+      <header class="walkthrough-header">
+        <p id="walkthrough-target">
+          {(props.session.walkthrough === "zig" ? "Zig" : "JavaScript") + " · How it works"}
+        </p>
+        <button
+          id="walkthrough-close"
+          class="walkthrough-close"
+          type="button"
+          aria-label="Close walkthrough"
+          autofocus
+          onClick={close}
+        >
+          ×
+        </button>
+      </header>
+      <div class="walkthrough-copy" aria-live="polite" aria-atomic="true">
+        <p class="walkthrough-count" id="walkthrough-count">
+          {"Step " + (step + 1) + " of 3"}
+        </p>
+        <h2 ref={title} tabIndex={-1} id="walkthrough-title">
+          {step < 2
+            ? props.session.presentation.title(step, props.session.walkthrough === "zig")
+            : props.session.presentation.demoTitle}
+        </h2>
+        <p id="walkthrough-description" hidden={!header.length}>
+          <InlineContent parts={header} />
+        </p>
+      </div>
+      {props.session.walkthrough && (
+        <div class="walkthrough-workspace" style="display:contents">
+          {step < 2 ? (
+            <div class="walkthrough-scene" id="walkthrough-scene">
+              {step === 0 && <CodeLegend />}
+              {[step].map((current) => (
+                <LessonContent
+                  key={current}
+                  content={props.session.presentation
+                    .content(current, props.session.walkthrough === "zig")
+                    .slice(header.length ? 1 : 0)}
+                  tabs={tabs}
+                />
+              ))}
+            </div>
+          ) : (
+            <div class="debugger-scene">
+              <PageDebugger
+                options={props.session.options}
+                presentation={props.session.presentation}
+                server={props.session.walkthrough === "zig"}
+              />
+            </div>
+          )}
+        </div>
+      )}
+      <footer class="walkthrough-footer">
+        <button
+          id="walkthrough-back"
+          class="walkthrough-secondary"
+          type="button"
+          disabled={step === 0 && !tabs.canMove(-1)}
+          onClick={back}
+        >
+          {step === 2 ? "↺ Replay" : "← Back"}
+        </button>
+        <div id="walkthrough-progress" class="walkthrough-progress" aria-hidden="true">
+          {[0, 1, 2].map((index) => (
+            <span class={index === step ? "is-current" : index < step ? "is-complete" : ""} />
+          ))}
+        </div>
+        <button
+          ref={next}
+          id="walkthrough-next"
+          class="walkthrough-primary"
+          type="button"
+          onClick={advance}
+        >
+          {step === 2 ? "Done" : "Next →"}
+        </button>
+      </footer>
+    </dialog>
+  );
+}

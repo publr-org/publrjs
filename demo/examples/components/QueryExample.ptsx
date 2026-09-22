@@ -1,0 +1,20 @@
+import { awaited, Loading } from "publr";
+import { invalidate as invalidateTag } from "publr/query";
+import { lookupMembers } from "./Desk.ptsx";
+
+
+export function QueryExample() {
+  const first = awaited(lookupMembers(), { cache: { key: ["query-example-team"], ttl: 60000, tags: ["people"] } });
+  const second = awaited(lookupMembers(), { cache: { key: ["query-example-team"], ttl: 60000, tags: ["people"] } });
+  function invalidate() { invalidateTag("people"); }
+
+  return <section>
+    <Loading fallback={<p>Loading both readers…</p>}>
+      <div class="readers">
+        <p>Reader A <strong>{first.length} people</strong></p>
+        <p>Reader B <strong>{second.length} people</strong></p>
+      </div>
+    </Loading>
+    <button onClick={invalidate}>Invalidate people</button>
+  </section>;
+}

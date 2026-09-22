@@ -1,0 +1,18 @@
+import { state, Show } from "publr";
+
+export function ConditionalMessage() {
+  let visible = state(true);
+
+  function toggle() {
+    visible = !visible;
+  }
+
+  return (
+    <div class="lesson-conditional">
+      <button onClick={toggle}>Toggle message</button>
+      <Show when={visible}>
+        <p>Hello.</p>
+      </Show>
+    </div>
+  );
+}

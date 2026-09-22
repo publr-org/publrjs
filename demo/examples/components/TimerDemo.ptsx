@@ -1,0 +1,19 @@
+import { state, Show } from "publr";
+import { Timer } from "./Timer.ptsx";
+
+export function TimerDemo() {
+  let visible = state(true);
+
+  function toggle() {
+    visible = !visible;
+  }
+
+  return (
+    <div class="lesson-cleanup">
+      <button onClick={toggle}>Toggle timer</button>
+      <Show when={visible} fallback={<p>Timer removed.</p>}>
+        <Timer />
+      </Show>
+    </div>
+  );
+}

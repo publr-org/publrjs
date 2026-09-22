@@ -1,0 +1,19 @@
+import { ref } from "publr";
+
+export function FocusInput() {
+  const nameInput = ref<HTMLInputElement>();
+
+  function focusName() {
+    nameInput.current?.focus();
+  }
+
+  return (
+    <div class="lesson-ref">
+      <label>
+        Name
+        <input ref={nameInput} placeholder="Type here" />
+      </label>
+      <button onClick={focusName}>Focus input</button>
+    </div>
+  );
+}

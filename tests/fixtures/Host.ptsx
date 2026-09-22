@@ -1,0 +1,10 @@
+import { TodoList } from "./TodoList.ptsx";
+import { data } from "./state";
+
+export function Host() {
+  return (
+    <TodoList title="Launch" initialItems={data}>
+      <small>auto-saved</small>
+    </TodoList>
+  );
+}

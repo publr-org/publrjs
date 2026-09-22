@@ -1,0 +1,10 @@
+import {state} from "publr";
+export function Bindings() {
+  let active = state(false);
+  const toggle = () => { active = !active; };
+  return <section class={["base", active ? "on" : "off"]} onWindowResize={toggle}>
+    <button onClick={toggle} $$on$keydown$enter$prevent={toggle}>Toggle</button>
+    <output>{active ? "yes" : "no"}</output>
+    {active ? <p aria-hidden={false}>On</p> : <span>Off</span>}
+  </section>;
+}

@@ -1,0 +1,85 @@
+/* Shared by the app and isolated preview documents. Light values stay in their original rules. */
+:root {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --theme-amber-ink: #e0b97b;
+  --theme-amber-line: #52627e;
+  --theme-amber-surface: #342d21;
+  --theme-blue-ink: #91baff;
+  --theme-blue-line: #52627e;
+  --theme-blue-surface: #26334e;
+  --theme-green-ink: #7ed5b3;
+  --theme-green-line: #52627e;
+  --theme-ink: #e5e9f1;
+  --theme-line: #3a414f;
+  --theme-muted: #aab4c5;
+  --theme-purple-ink: #c4a6f0;
+  --theme-purple-line: #52627e;
+  --theme-purple-surface: #31283f;
+  --theme-red-ink: #f193ab;
+  --theme-surface: #171a21;
+  --theme-surface-raised: #282e3a;
+  --theme-surface-soft: #1d212b;
+}
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--theme-line, #d8dce7);
+  border-radius: 6px;
+  background: var(--theme-surface, #fff);
+  color: var(--theme-ink, #202329);
+  font: 24px/1 system-ui;
+  cursor: pointer;
+}
+.theme-toggle:hover {
+  background: var(--theme-surface-soft, #f3f4f8);
+}
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--theme-blue-ink, #4357bf);
+  outline-offset: 3px;
+}
+:root[data-theme="dark"] body {
+  background-color: var(--theme-surface);
+  color: var(--theme-ink);
+}
+:root[data-theme="dark"] .effect-tab {
+  background: var(--theme-surface-soft);
+  color: var(--theme-muted);
+  border-color: var(--theme-line);
+}
+:root[data-theme="dark"] .effect-tab span {
+  color: var(--theme-ink);
+}
+:root[data-theme="dark"] {
+  --ink: #e5e9f1;
+  --muted: #aab4c5;
+  --line: #3a414f;
+  --purple: #c4a6f0;
+  --green: #7ed5b3;
+}
+@media (max-width: 600px) {
+  .theme-toggle {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}
+
+/* Keep the corner control clear of the legacy examples' header links. */
+body:has(> .theme-toggle) > .site-header,
+body:has(> .theme-toggle) .topbar {
+  padding-right: max(72px, env(safe-area-inset-right));
+}
+@media (max-width: 760px) {
+  .chapters-expanded .chapter-sidebar-header {
+    padding-right: 66px;
+  }
+}

@@ -1,0 +1,6 @@
+import { state } from "publr";
+export function Fragments() {
+  let count = state(0);
+  function increment() { count++; }
+  return <><button onClick={increment}>+</button><><output>{count}</output></></>;
+}

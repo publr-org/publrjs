@@ -1,0 +1,59 @@
+import { reactive, awaited } from "publr";
+import * as dom from "publr/dom";
+import { findPeople } from "./request.js";
+
+export function ResilientSearch() {
+  const state = reactive({ search: "" });
+  const people = awaited(() => findPeople(state.search));
+
+  function updateSearch(event) {
+    state.search = event.currentTarget.value;
+  }
+
+  function retry() {
+    people.refresh();
+  }
+
+  return dom.element("section", (section) => {
+    dom.classes(section, () => "lesson-people");
+    dom.attr(section, "aria-busy", () => people.isPending);
+    dom.append(section, dom.element("label", (label) => {
+      dom.append(label, dom.literal("Search people"));
+      dom.append(label, dom.element("input", (input) => {
+        dom.attr(input, "value", () => state.search);
+        dom.event(input, "input", updateSearch);
+      }));
+    }));
+    dom.append(section, dom.element("p", (status) => {
+      dom.append(status, dom.insert(() =>
+        people.isPending ? "Waiting for people…" : people.isError ? "Could not update people" : "Up to date"
+      ));
+    }));
+    dom.append(section, dom.when(
+      () => people.isError,
+      () => dom.element("p", (error) => {
+        dom.attr(error, "role", () => "alert");
+        dom.append(error, dom.insert(() => people.error.message));
+        dom.append(error, dom.element("button", (button) => {
+          dom.append(button, dom.literal("Retry"));
+          dom.event(button, "click", retry);
+        }));
+      })
+    ));
+    dom.append(section, dom.when(
+      () => people.isLoaded,
+      () => dom.element("ul", (list) => {
+        dom.append(list, dom.list(
+          () => people.value,
+          (person) => person.id,
+          (person) => dom.element("li", (row) => {
+            dom.append(row, dom.insert(() => person().name));
+          })
+        ));
+      }),
+      () => dom.element("p", (fallback) => {
+        dom.append(fallback, dom.insert(() => people.isError ? "No people loaded yet." : "Loading people…"));
+      })
+    ));
+  });
+}

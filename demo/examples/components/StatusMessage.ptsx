@@ -1,0 +1,29 @@
+import { state, Switch, Match } from "publr";
+
+export function StatusMessage() {
+  let status = state("ready");
+
+  return (
+    <div class="lesson-switch">
+      <label>
+        Status
+        <select
+          value={status}
+          onChange={(event) => (status = event.currentTarget.value)}
+        >
+          <option value="ready">Ready</option>
+          <option value="busy">Busy</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <Switch fallback={<p>No matching status.</p>}>
+        <Match when={status === "ready"}>
+          <p>Ready to go.</p>
+        </Match>
+        <Match when={status === "busy"}>
+          <p>Working on it.</p>
+        </Match>
+      </Switch>
+    </div>
+  );
+}

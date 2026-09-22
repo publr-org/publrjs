@@ -1,0 +1,204 @@
+:root {
+  font-family:
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: var(--theme-ink, #25292e);
+  background: var(--theme-surface, #fafafa);
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input,
+select {
+  font: inherit;
+  border: 1px solid var(--theme-line, #d9dce1);
+  border-radius: 6px;
+  background: var(--theme-surface, #fff);
+  padding: 9px 12px;
+  color: inherit;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+button,
+select,
+summary {
+  cursor: pointer;
+}
+button:hover {
+  background: var(--theme-surface-soft, #f0f1f5);
+}
+button:disabled {
+  cursor: default;
+  color: var(--theme-muted, #686f7a);
+  background: var(--theme-surface-soft, #f3f4f6);
+}
+:focus-visible {
+  outline: 2px solid var(--theme-purple-line, #6654c7);
+  outline-offset: 3px;
+}
+[hidden] {
+  display: none !important;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+code {
+  overflow-wrap: anywhere;
+}
+.site-header {
+  height: 66px;
+  border-bottom: 1px solid var(--theme-line, #e3e5e9);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--theme-surface, #fff);
+}
+.site-header > a:first-child {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+}
+.site-header > a:first-child span {
+  color: var(--theme-muted, #7c828d);
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+.site-header > a:last-child {
+  font-size: 13px;
+  color: var(--theme-purple-ink, #5d4bab);
+}
+.layout {
+  max-width: 1510px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+}
+.lesson-nav {
+  border-right: 1px solid var(--theme-line, #e3e5e9);
+  padding: 35px 18px;
+  min-height: calc(100vh - 66px);
+}
+.lesson-nav > p {
+  margin: 0 12px 18px;
+  color: var(--theme-muted, #737b87);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+.lesson-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 12px;
+  margin-bottom: 5px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.lesson-nav a span {
+  color: var(--theme-muted, #9096a0);
+  font:
+    11px ui-monospace,
+    monospace;
+}
+.lesson-nav a[aria-current="page"] {
+  color: var(--theme-purple-ink, #5846a5);
+  background: var(--theme-surface-soft, #eeebfa);
+  font-weight: 600;
+}
+.nav-note {
+  font-size: 12px;
+  color: var(--theme-muted, #757d87);
+  line-height: 1.7;
+  margin: 30px 12px;
+}
+main {
+  padding: 34px 36px;
+  min-width: 0;
+}
+.kicker {
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  color: var(--theme-muted, #706389);
+  font-weight: 600;
+  margin-bottom: 13px;
+}
+h1 {
+  font-size: 29px;
+  letter-spacing: -0.9px;
+  font-weight: 650;
+}
+.lesson-heading > p:last-child {
+  margin-top: 12px;
+  color: var(--theme-muted, #606975);
+  line-height: 1.65;
+  font-size: 14px;
+}
+.steps {
+  margin: 24px 0 27px;
+  padding: 16px 20px 16px 39px;
+  background: var(--theme-surface-soft, #f0f1f3);
+  border-radius: 7px;
+  color: var(--theme-muted, #49515d);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.steps li {
+  padding-left: 4px;
+}
+.steps li::marker {
+  color: var(--theme-muted, #756291);
+  font-weight: 600;
+}
+.workbench {
+  display: grid;
+  grid-template-columns: minmax(270px, 0.88fr) minmax(0, 1.12fr);
+  align-items: start;
+  gap: 20px;
+}
+.preview-panel,
+.inspection-panel {
+  min-width: 0;
+  border: 1px solid var(--theme-line, #e0e3e8);
+  border-radius: 9px;
+  background: var(--theme-surface, #fff);
+  overflow: hidden;
+}
+.panel-heading {
+  min-height: 48px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--theme-line, #e4e6eb);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.panel-heading h2 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.panel-heading a {
+  font-size: 11px;
+  color: var(--theme-muted, #747d87);
+}

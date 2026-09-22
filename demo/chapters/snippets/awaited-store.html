@@ -1,0 +1,18 @@
+<section
+  class="lesson-people"
+  data-p-store="PeopleSearch"
+  data-p-bind="aria-busy:$people.isPending"
+>
+  <label
+    >Search people
+    <input data-p-bind="value:$search" data-p-on="input:updateSearch" />
+  </label>
+  <p data-p-text="$people.isPending -> 'Waiting for people…' ~ 'Up to date'"></p>
+  <p data-p-show="not $people.isLoaded">Loading people…</p>
+  <p data-p-show="$people.isError" data-p-text="$people.error"></p>
+  <ul data-p-show="$people.isLoaded">
+    <template data-p-for="person of $people.value" data-p-key="person.id">
+      <li data-p-text="person.name"></li>
+    </template>
+  </ul>
+</section>

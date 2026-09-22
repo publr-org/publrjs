@@ -1,0 +1,85 @@
+import type { Chapter } from "../../chapters/catalog";
+import { ThemeHead } from "./ThemeHead.ptsx";
+import { PreviewPath } from "./PreviewPath.ptsx";
+
+export function ChapterPage(props: { chapter: Chapter }) {
+  const chapter = props.chapter;
+  return (
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content={chapter.description} />
+        <title>{chapter.title}</title>
+        {chapter.styles.map((href) => (
+          <link rel="stylesheet" href={href} />
+        ))}
+        <ThemeHead />
+      </head>
+      <body class={chapter.bodyClass}>
+        <div id="chapter-navigation" style="display:contents" />
+        <main>
+          <h1>{chapter.heading}</h1>
+          <section class="source" aria-labelledby="source-title">
+            <h2 id="source-title">{chapter.source}</h2>
+            <pre>
+              <code>{"__PUBLR_SLOT_SOURCE__"}</code>
+            </pre>
+          </section>
+          <p class="compiler">PJSX compiles the same source into:</p>
+          <div class="fork" aria-hidden="true" />
+          <div class="paths">
+            <PreviewPath server={true} introduction={chapter.command === "greeting"} />
+            <PreviewPath server={false} introduction={chapter.command === "greeting"} />
+          </div>
+          <p class="try-it">{chapter.tryIt}</p>
+          <div class="compare-launch">
+            <button
+              id="compare-open"
+              class="walkthrough-secondary"
+              type="button"
+              aria-haspopup="dialog"
+              hidden
+            >
+              Compare
+            </button>
+          </div>
+          {chapter.noscript && <noscript>{chapter.noscript}</noscript>}
+        </main>
+        <nav class="step-navigation" aria-label="Tutorial steps">
+          {chapter.previous ? (
+            <a class="previous-step" href={chapter.previous} rel="prev">
+              ← Previous
+            </a>
+          ) : (
+            <button class="previous-step" type="button" disabled>
+              ← Previous
+            </button>
+          )}
+          {chapter.next ? (
+            <a class="next-step" href={chapter.next} rel="next">
+              Next →
+            </a>
+          ) : (
+            <button class="next-step" type="button" disabled>
+              Next →
+            </button>
+          )}
+        </nav>
+        <div id="tutorial-dialogs" style="display:contents" />
+        <script
+          type="module"
+          src={
+            "/" +
+            (chapter.command === "greeting"
+              ? "introduction"
+              : chapter.command === "hello"
+                ? "interaction"
+                : chapter.command) +
+            ".js"
+          }
+        />
+      </body>
+    </html>
+  );
+}

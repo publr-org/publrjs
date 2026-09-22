@@ -1,0 +1,26 @@
+import { state, ref } from "publr";
+
+export function AnchoredDetails() {
+  const trigger = ref<HTMLButtonElement>();
+  let open = state(false);
+  let thanks = state(0);
+
+  function showDetails() { open = true; }
+  function closeDetails() { open = false; }
+  function thankAda() { thanks++; }
+
+  return (
+    <section class="position-card">
+      <h3>Ada Chen</h3>
+      <p>Thanks: {thanks}</p>
+      <button ref={trigger} onClick={showDetails} aria-expanded={open}>Open details</button>
+      <aside portal position={{ anchor: trigger, placement: "bottom-start", offset: 8 }}
+        hidden={!open} class="position-panel" aria-label="Ada’s details">
+        <h3>Ada Chen</h3>
+        <p>Product designer</p>
+        <button onClick={thankAda}>Thank Ada</button>
+        <button onClick={closeDetails}>Close details</button>
+      </aside>
+    </section>
+  );
+}

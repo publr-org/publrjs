@@ -1,0 +1,108 @@
+import { ThemeHead } from "../components/ThemeHead.ptsx";
+
+export function SharedStatePage() {
+  return (
+    <html lang={"en"}>
+      <head>
+        <meta charset={"UTF-8"} />
+        <meta name={"viewport"} content={"width=device-width, initial-scale=1"} />
+        <meta
+          name={"description"}
+          content={"HTML bindings and a DOM component share one reactive store."}
+        />
+        <title>{"One shared count · Publr"}</title>
+        <link rel={"stylesheet"} href={"/introduction.css"} />
+        <ThemeHead />
+      </head>
+      <body class={"interaction-lesson"}>
+        <div id="chapter-navigation" style="display:contents" />
+        <main>
+          <h1>{"You can share state between them!"}</h1>
+          <p class={"compiler"} id={"sharing-explanation"}>
+            {" Each counter owns its count. Click either button. Only that counter changes. "}
+          </p>
+          <div class={"fork"} aria-hidden={"true"} />
+          <div class={"paths"}>
+            <section class={"path"} aria-labelledby={"server-title"}>
+              <h2 id={"server-title"}>{"Zig"}</h2>
+              <p class={"execution"}>{"Runs on the server"}</p>
+              <div class={"arrow"} aria-hidden={"true"}>
+                {"↓"}
+              </div>
+              <div class={"result"} id={"server-result"}>
+                {"__PUBLR_SLOT_GREETING__"}
+              </div>
+              <span data-walkthrough-host="zig" style="display:contents"><button
+                class={"how-it-works"}
+                type={"button"}
+                data-walkthrough={"zig"}
+                aria-haspopup={"dialog"}
+                aria-label={"How the Zig demo works"}
+                hidden
+              >
+                {" How it works "}
+                <span aria-hidden={"true"}>{"↗"}</span>
+              </button></span>
+            </section>
+            <section class={"path"} aria-labelledby={"browser-title"}>
+              <h2 id={"browser-title"}>{"JavaScript"}</h2>
+              <p class={"execution"}>{"Runs in the browser"}</p>
+              <div class={"arrow"} aria-hidden={"true"}>
+                {"↓"}
+              </div>
+              <div class={"result"} id={"browser-result"} />
+              <span data-walkthrough-host="javascript" style="display:contents"><button
+                class={"how-it-works"}
+                type={"button"}
+                data-walkthrough={"javascript"}
+                aria-haspopup={"dialog"}
+                aria-label={"How the JavaScript demo works"}
+                hidden
+              >
+                {" How it works "}
+                <span aria-hidden={"true"}>{"↗"}</span>
+              </button></span>
+            </section>
+          </div>
+          <p class={"try-it"} id={"sharing-result"} aria-live={"polite"}>
+            {" Click Increment. Each counter keeps its own count. "}
+          </p>
+          <div class={"compare-launch"}>
+            <button
+              id={"share-count"}
+              class={"walkthrough-secondary"}
+              type={"button"}
+              aria-haspopup={"dialog"}
+            >
+              {" Share the count "}
+            </button>
+          </div>
+          <div class={"compare-launch"}>
+            <button
+              id={"compare-open"}
+              class={"walkthrough-secondary"}
+              type={"button"}
+              aria-haspopup={"dialog"}
+              hidden
+            >
+              {" Compare "}
+            </button>
+          </div>
+          <noscript>
+            {"JavaScript is required for both click handlers and the walkthroughs."}
+          </noscript>
+        </main>
+        <nav class={"step-navigation"} aria-label={"Tutorial steps"}>
+          <a class={"previous-step"} href={"/learn/state"} rel={"prev"}>
+            {"← Previous"}
+          </a>
+          <a class={"next-step"} href={"/learn/derived"} rel={"next"}>
+            {"Next →"}
+          </a>
+        </nav>
+        <div id="tutorial-dialogs" style="display:contents" />
+        <script type={"module"} src={"/shared-state.js"} />
+      </body>
+    </html>
+  );
+}

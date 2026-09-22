@@ -1,0 +1,20 @@
+import { state, effect } from "publr";
+
+export function EffectCounter() {
+  let count = state(0);
+
+  effect(() => {
+    document.title = "Count: " + count;
+  });
+
+  function increment() {
+    count++;
+  }
+
+  return (
+    <div class="lesson-counter">
+      <output aria-label="Count">{count}</output>
+      <button onClick={increment}>Increment</button>
+    </div>
+  );
+}

@@ -1,0 +1,11 @@
+import { state, awaited, Loading } from "publr";
+import { invalidate as invalidateTag } from "publr/query";
+import { lookupMembers } from "./Desk.ptsx";
+export function CacheLab() {
+  let calls = state(0);
+  function load() { calls++; return lookupMembers(); }
+  const first = awaited(load(), { cache: { key: ["cache-lab-team"], ttl: 60000, tags: ["people"] } });
+  const second = awaited(load(), { cache: { key: ["cache-lab-team"], ttl: 60000, tags: ["people"] } });
+  function invalidate() { invalidateTag("people"); }
+  return <section class="cache-card"><div class="panel-heading"><div><p class="eyebrow">ONE REQUEST, TWO READERS</p><h3>A shared cache</h3></div><button class="button" onClick={invalidate}>Invalidate tag</button></div><p class="muted">Same key, shared result. Freshness is checked on reads with a 60-second TTL.</p><Loading fallback={<p class="muted">Fetching the shared result…</p>}><div class="cache-readers"><div><span>Reader A</span><strong>{first.length} people</strong></div><span class="cache-link">⟷</span><div><span>Reader B</span><strong>{second.length} people</strong></div></div></Loading><p class="cache-footer"><strong>{calls}</strong> native requests <span>{first.isPending || second.isPending ? "· refreshing together" : "· same result, shared work"}</span></p></section>;
+}

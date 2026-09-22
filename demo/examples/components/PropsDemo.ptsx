@@ -1,0 +1,20 @@
+import { state } from "publr";
+import { Greeting } from "./Greeting.ptsx";
+
+export function PropsDemo() {
+  let name = state("Ada");
+
+  function updateName(event: Event) {
+    name = (event.currentTarget as HTMLInputElement).value;
+  }
+
+  return (
+    <div class="lesson-input">
+      <label>
+        Name
+        <input value={name} onInput={updateName} />
+      </label>
+      <Greeting name={name} />
+    </div>
+  );
+}

@@ -1,0 +1,8 @@
+import { state, derived, effect } from "publr";
+export function Counter(props: { initial: number }) {
+  let count = state(props.initial);
+  const initial = count;
+  const doubled = derived(() => count * 2);
+  function increment() { count++; }
+  return <section><button onClick={increment}>+</button><output>{count} / {doubled} / {initial}</output></section>;
+}

@@ -1,0 +1,72 @@
+import { effect, ref } from "publr";
+import type { LessonOptions } from "../../chapters/types";
+import { nativePreview, isolatedSession, isolatedKind } from "../../previews/session";
+
+export function PreviewSurface(props: {
+  html: string;
+  server: boolean;
+  options: LessonOptions;
+  active: boolean;
+  controlled?: boolean;
+  snapshot?: (html: string) => void;
+  ready?: () => void;
+}) {
+  const host = ref<HTMLDivElement>();
+  const frame = ref<HTMLIFrameElement>();
+  const isolated = !!(
+    props.options.awaitedLesson ||
+    props.options.portalLesson ||
+    props.options.effectLesson
+  );
+  let session = { ready: Promise.resolve(), start: () => {}, dispose: () => {} };
+  effect(() => {
+    const update = props.snapshot ?? (() => {});
+    session = isolated
+      ? isolatedSession(
+          frame.current!,
+          props.html,
+          props.server,
+          props.options,
+          props.controlled ?? true,
+          update,
+        )
+      : nativePreview(host.current!, props.html, props.server, props.options, update);
+    let alive = true;
+    void session.ready.then(() => {
+      if (alive) props.ready?.();
+    });
+    return () => {
+      alive = false;
+      session?.dispose();
+    };
+  });
+  effect(() => {
+    if (props.active) session?.start();
+  });
+  return (
+    <>
+      {isolated ? (
+        <iframe
+          ref={frame}
+          class={
+            props.options.portalLesson
+              ? "portal-preview"
+              : props.options.effectLesson
+                ? "effect-preview"
+                : "awaited-preview"
+          }
+          title={
+            (props.server ? "Zig" : "JavaScript") + " " + isolatedKind(props.options) + " preview"
+          }
+        />
+      ) : (
+        <div
+          ref={host}
+          class="preview-content"
+          style="display:contents"
+          data-p-activation="manual"
+        />
+      )}
+    </>
+  );
+}

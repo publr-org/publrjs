@@ -1,0 +1,17 @@
+import { createLocalStore, awaited } from "publr";
+import { findPeople } from "./request.js";
+
+createLocalStore("ResilientSearch", ({ state }) => ({
+  state: {
+    search: "",
+    people: awaited(() => findPeople(state.search))
+  },
+  actions: {
+    retry() {
+      state.people.refresh();
+    },
+    updateSearch(_data, { event }) {
+      state.search = event.currentTarget.value;
+    }
+  }
+}));

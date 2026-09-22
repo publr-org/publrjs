@@ -1,0 +1,51 @@
+.focus-frame {
+  min-height: 390px;
+}
+.focus-guide,
+.focus-status {
+  margin: 0 0 12px;
+  font-size: 11px;
+  color: var(--theme-muted, #586171);
+  text-align: left;
+}
+.focus-status {
+  margin-top: 0;
+}
+.focus-card {
+  padding: 12px;
+  border: 1px dashed var(--theme-line, #8892a5);
+  border-radius: 6px;
+  background: var(--theme-surface, #f6f7fb);
+  text-align: left;
+}
+.focus-card[inert] {
+  opacity: 0.45;
+}
+.focus-card h3,
+.focus-panel h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+.focus-card p,
+.focus-panel p {
+  margin: 6px 0;
+}
+.focus-panel {
+  width: 225px;
+  max-width: calc(100vw - 16px);
+  max-height: var(--publr-available-height, calc(100vh - 16px));
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--theme-blue-line, #6470bc);
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 5px 16px #20232a1a;
+  text-align: left;
+}
+.focus-panel button {
+  display: block;
+}
+.focus-frame button:focus {
+  outline: 3px solid var(--theme-blue-line, #5264df);
+  outline-offset: 3px;
+}

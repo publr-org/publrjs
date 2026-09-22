@@ -1,0 +1,22 @@
+import { CombinedApp } from "../components/CombinedApp.ptsx";
+import { ThemeHead } from "../components/ThemeHead.ptsx";
+
+export function IndexPage() {
+  return (
+    <html lang={"en"}>
+      <head>
+        <meta charset={"UTF-8"} />
+        <meta name={"viewport"} content={"width=device-width, initial-scale=1"} />
+        <title>{"Team desk · Combined demo"}</title>
+        <link rel={"stylesheet"} href={"/style.css"} />
+        <ThemeHead />
+      </head>
+      <body>
+        <div id="combined-app" style="display:contents">
+          <CombinedApp />
+        </div>
+        <script type={"module"} src={"/demo.js"} />
+      </body>
+    </html>
+  );
+}

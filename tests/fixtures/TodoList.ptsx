@@ -1,0 +1,77 @@
+import { reactive } from "../../src/publr";
+
+type Todo = { id: string; text: string; done?: boolean };
+
+export function TodoList({
+  title,
+  initialItems,
+  children,
+}: {
+  title: string;
+  initialItems: readonly Todo[];
+  children?: JSX.Element;
+}) {
+  const state = reactive({
+    open: true,
+    items: initialItems.map((item) => ({ ...item, done: item.done ?? false })),
+  });
+
+  function toggle(id: string) {
+    const item = state.items.find((i) => i.id === id);
+    if (item) item.done = !item.done;
+  }
+
+  function remove(id: string) {
+    const at = state.items.findIndex((i) => i.id === id);
+    if (at !== -1) state.items.splice(at, 1);
+  }
+
+  return (
+    <section
+      class="todo-list"
+      :class={{ "is-open": state.open, "is-empty": state.items.length === 0 }}
+    >
+      <header>
+        <h2>
+          {title} · {state.items.filter((item) => !item.done).length} remaining
+        </h2>
+        <button
+          class="toggle-open"
+          type="button"
+          @click={() => {
+            state.open = !state.open;
+          }}
+          :text={state.open ? "Hide" : "Show"}
+        />
+      </header>
+
+      {state.open && (
+        <div class="body">
+          <p class="empty" :show={state.items.length === 0}>
+            Nothing left.
+          </p>
+
+          <ul :show={state.items.length > 0}>
+            {state.items.map((item) => (
+              <li :key={item.id} class="todo" :class={{ "is-done": item.done }}>
+                <button class="t" type="button" @click={() => toggle(item.id)}>
+                  {item.done ? "Reopen" : "Complete"}: {item.text}
+                </button>
+                <button
+                  class="r"
+                  type="button"
+                  @click={() => remove(item.id)}
+                  :aria-label={`Remove ${item.text}`}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {children && <footer>{children}</footer>}
+        </div>
+      )}
+    </section>
+  );
+}

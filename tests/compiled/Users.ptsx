@@ -1,0 +1,12 @@
+import { state, awaited, isPending, errorOf, Loading } from "publr";
+import { fetchUsers } from "./backend/users.zig";
+export function Users(props: { search: string }) {
+  let search = state(props.search);
+  const users = awaited(fetchUsers(search));
+  return <section aria-busy={isPending(users)}>
+    <input value={search} onInput={(event) => search = event.currentTarget.value} />
+    <Loading fallback={<p>Loading users…</p>}>
+      <ul>{users.map((user) => <li key={user.id}><input />{user.name}</li>)}</ul>
+    </Loading>
+  </section>;
+}

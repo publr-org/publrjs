@@ -1,0 +1,4 @@
+export function Hello() {
+  const openAlert = () => alert("Hello.");
+  return <button onClick={openAlert}>Say hello</button>;
+}

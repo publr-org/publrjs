@@ -1,0 +1,17 @@
+import { For, state } from "publr";
+
+export function HelperRoot() {
+  let rows = state([{ id: 1, name: "One" }]);
+
+  function add() {
+    rows = [...rows, { id: 2, name: "Two" }];
+  }
+
+  return (
+    <For each={rows} key={(row) => row.id}>
+      {(row) => (
+        <tr><td>{row.name}</td><td><button onClick={add}>Add</button></td></tr>
+      )}
+    </For>
+  );
+}

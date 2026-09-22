@@ -1,0 +1,18 @@
+import { awaited, Loading } from "publr";
+import { readPeople } from "../../backend/queries.zig";
+
+export function PeopleReader(props: { label: string; search: string }) {
+  const people = awaited(readPeople(props.search), {
+    cache: { ttl: 60000, tags: ["people"] }
+  });
+
+  return (
+    <section class="query-reader" aria-busy={people.isPending}>
+      <h3>{props.label}</h3>
+      <p class="people-status">{people.isPending ? "Waiting for people…" : "Up to date"}</p>
+      <Loading fallback={<p>Loading people…</p>}>
+        <ul>{people.map(person => <li key={person.id}>{person.name}</li>)}</ul>
+      </Loading>
+    </section>
+  );
+}

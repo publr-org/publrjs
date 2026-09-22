@@ -1,0 +1,87 @@
+.page-debugger-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  list-style: none;
+  padding: 0 0 1rem;
+  margin: 0;
+  border-bottom: 1px solid var(--theme-line, #e1e5eb);
+}
+.page-debugger-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  color: var(--theme-muted, #7b8392);
+  font-size: 0.75rem;
+  text-align: center;
+}
+.page-debugger-step + .page-debugger-step::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  right: calc(50% + 20px);
+  width: calc(100% - 40px);
+  height: 1px;
+  background: var(--theme-surface-raised, #d7dce5);
+}
+.page-debugger-number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--theme-line, #cfd4df);
+  border-radius: 50%;
+  background: var(--theme-surface, #f8f9fc);
+  font-size: 0.75rem;
+}
+.page-debugger-step.is-current {
+  color: var(--theme-blue-ink, #3048a6);
+  font-weight: 600;
+}
+.page-debugger-step.is-current .page-debugger-number {
+  border-color: var(--theme-blue-line, #3048a6);
+  background: var(--theme-blue-surface, #3048a6);
+  color: white;
+  box-shadow: 0 0 0 3px var(--theme-line, #e8ecfc);
+}
+.page-debugger-step.is-complete {
+  color: var(--theme-green-ink, #21643d);
+}
+.page-debugger-step.is-complete .page-debugger-number {
+  border-color: var(--theme-green-line, #b4d9c1);
+  background: var(--theme-surface-raised, #def3e5);
+}
+.page-debugger-status {
+  text-align: center;
+}
+.page-debugger-explanation {
+  color: var(--theme-muted, #56606e);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.page-debugger-control {
+  justify-self: center;
+  align-self: center;
+}
+.page-debugger-control:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.walkthrough-demo > #app:empty {
+  width: 100%;
+  padding: 1rem;
+  border: 1px dashed var(--theme-line, #cfd4df);
+  border-radius: 4px;
+  text-align: center;
+}
+.walkthrough-demo > #app:empty::after {
+  content: "App placeholder";
+  color: var(--theme-muted, #8791a4);
+  font-size: 0.8125rem;
+}
+.result button:hover,
+.walkthrough-demo button:hover {
+  background: #333;
+  border-color: var(--theme-line, #333);
+}

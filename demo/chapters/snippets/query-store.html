@@ -1,0 +1,53 @@
+<section class="lesson-query" data-p-store="SharedPeople">
+  <div class="query-actions">
+    <button
+      data-p-on="click:showAll"
+      data-p-bind="disabled:$addPerson.isPending; aria-pressed:$search == ''"
+    >
+      All people
+    </button>
+    <button
+      data-p-on="click:showAda"
+      data-p-bind="disabled:$addPerson.isPending; aria-pressed:$search == 'Ada'"
+    >
+      Ada
+    </button>
+    <button data-p-on="click:add" data-p-bind="disabled:not $canAdd">
+      Add person and invalidate
+    </button>
+  </div>
+  <p class="query-write-status" role="status">
+    <span data-p-show="$addPerson.isPending">Saving…</span>
+    <span data-p-show="not $addPerson.isPending"
+      ><span data-p-text="$addPerson.value -> 'Person saved.' ~ 'Ready to add a person.'"></span
+    ></span>
+  </p>
+  <p class="query-hint" data-p-show="$search != ''">Choose All people to add a person.</p>
+  <p role="alert" data-p-show="$addPerson.isError">Could not add a person. Try again.</p>
+  <section class="query-reader" data-p-bind="aria-busy:$first.isPending">
+    <h3>Reader A</h3>
+    <p
+      class="people-status"
+      data-p-text="$first.isPending -> 'Waiting for people…' ~ 'Up to date'"
+    ></p>
+    <p data-p-show="not $first.isLoaded">Loading people…</p>
+    <ul data-p-show="$first.isLoaded">
+      <template data-p-for="person of $first.value" data-p-key="person.id">
+        <li data-p-text="person.name"></li>
+      </template>
+    </ul>
+  </section>
+  <section class="query-reader" data-p-bind="aria-busy:$second.isPending">
+    <h3>Reader B</h3>
+    <p
+      class="people-status"
+      data-p-text="$second.isPending -> 'Waiting for people…' ~ 'Up to date'"
+    ></p>
+    <p data-p-show="not $second.isLoaded">Loading people…</p>
+    <ul data-p-show="$second.isLoaded">
+      <template data-p-for="person of $second.value" data-p-key="person.id">
+        <li data-p-text="person.name"></li>
+      </template>
+    </ul>
+  </section>
+</section>

@@ -1,0 +1,27 @@
+import { state, For } from "publr";
+
+export function ItemList() {
+  let items = state([1, 2]);
+
+  function add() {
+    items = [...items, items.length + 1];
+  }
+
+  function remove() {
+    items = items.slice(0, -1);
+  }
+
+  return (
+    <div class="lesson-list">
+      <div class="lesson-list-actions">
+        <button onClick={add}>Add item</button>
+        <button onClick={remove}>Remove last</button>
+      </div>
+      <ul>
+        <For each={items} key={(item) => item}>
+          {(item) => <li>Item {item}</li>}
+        </For>
+      </ul>
+    </div>
+  );
+}

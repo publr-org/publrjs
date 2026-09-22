@@ -1,0 +1,20 @@
+import { state, awaited, refresh, Loading } from "publr";
+import { fetchMembers } from "../../backend/team.zig";
+
+export function AsyncExample() {
+  let search = state("");
+  let failing = state(false);
+  const people = awaited(fetchMembers(search, false, failing, 800));
+  function fail() { failing = true; }
+  function retry() { failing = false; refresh(people); }
+
+  return <section aria-busy={people.isPending}>
+    <label>Search <input type="search" value={search} onInput={event => search = event.currentTarget.value} /></label>
+    <p class="async-status">{people.isPending ? "Pending — keeping the previous result" : "Ready"}</p>
+    {people.isError && <p role="alert">Request failed. The last result stays visible. <button onClick={retry}>Retry</button></p>}
+    <Loading fallback={<p>Initial loading — no previous result yet.</p>}>
+      <ul>{people.map(person => <li key={person.id}>{person.name}</li>)}</ul>
+    </Loading>
+    <button onClick={fail}>Fail next request</button>
+  </section>;
+}

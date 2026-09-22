@@ -1,0 +1,350 @@
+import { state, effect, ref } from "publr";
+import { mount } from "publr/dom";
+import { destroy, portal } from "publr";
+import { untrack } from "publr/runtime";
+import { createRouter } from "publr/router";
+import { observeOperations } from "publr/transport";
+import { trapFocus } from "publr/focus";
+import { position } from "publr/position";
+import { Desk, Counter, CacheLab, loadDesk } from "../combined/examples";
+
+export function CombinedApp(props: {
+  interactive?: boolean;
+  initialHTML?: string;
+  bridgeHTML?: string;
+}) {
+  const desk = ref<HTMLDivElement>();
+  const guide = ref<HTMLDivElement>();
+  const guideButton = ref<HTMLButtonElement>();
+  let client = state(false);
+  let lab = state(false);
+  let labStarted = state(false);
+  let counterMounted = state(true);
+  let tour = state(false);
+  let owners = state(0);
+  let requests = state(0);
+  let events = state<{ id: number; message: string; kind: string }[]>([]);
+  let nextEvent = 0;
+  let stopDesk = () => {};
+  function log(message: string, kind = "effect") {
+    untrack(() => {
+      events = [{ id: ++nextEvent, message, kind }, ...events].slice(0, 9);
+    });
+  }
+  function clientMount() {
+    stopDesk();
+    destroy(desk.current!);
+    desk.current!.replaceChildren();
+    stopDesk = mount(desk.current!, Desk, { search: "" });
+    client = true;
+    log("Fresh client mount. Watch the initial fallback.", "mount");
+  }
+  effect(() => {
+    if (!props.interactive) return;
+    const host = desk.current!;
+    const document = new DOMParser().parseFromString(props.initialHTML ?? "", "text/html");
+    host.replaceChildren(...Array.from(document.body.childNodes));
+    const island = host.querySelector("[data-p-store]")!;
+    let alive = true;
+    void loadDesk().then(() => {
+      if (alive)
+        island.append(
+          ...Array.from(
+            new DOMParser().parseFromString(props.bridgeHTML ?? "", "text/html").body.childNodes,
+          ),
+        );
+    });
+    log("Server state adopted. No duplicate fetch.", "hydration");
+    return () => {
+      alive = false;
+      stopDesk();
+      destroy(host);
+    };
+  });
+  effect(() => {
+    if (!props.interactive) return;
+    const stop = observeOperations((endpoint) => {
+      const id = untrack(() => ++requests);
+      const operation = endpoint.split("/").at(-1);
+      const start = performance.now();
+      log(`#${id} ${operation} started`, "request");
+      return (response) =>
+        log(
+          `#${id} ${operation} · ${Math.round(performance.now() - start)}ms`,
+          response?.ok ? "resolved" : "failed",
+        );
+    });
+    const onEffect = (event: Event) => log((event as CustomEvent<string>).detail);
+    const onCleanup = (event: Event) =>
+      log(`${(event as CustomEvent<string>).detail} cleanup ran`, "cleanup");
+    const onOwner = (event: Event) => {
+      const detail = (event as CustomEvent<{ name: string; mounted: boolean }>).detail;
+      untrack(() => {
+        owners += detail.mounted ? 1 : -1;
+      });
+      if (!detail.mounted) log(`${detail.name} owner disposed`, "cleanup");
+    };
+    window.addEventListener("demo:effect", onEffect);
+    window.addEventListener("demo:cleanup", onCleanup);
+    window.addEventListener("demo:owner", onOwner);
+    return () => {
+      stop();
+      window.removeEventListener("demo:effect", onEffect);
+      window.removeEventListener("demo:cleanup", onCleanup);
+      window.removeEventListener("demo:owner", onOwner);
+    };
+  });
+  effect(() => {
+    if (!props.interactive) return;
+    const router = createRouter({
+      commit: "manual",
+      routes: [
+        { id: "directory", path: "/combined" },
+        { id: "lab", path: "/combined/lab" },
+      ],
+    }).start();
+    let previous = location.pathname;
+    const stop = effect(() => {
+      const path = router.current.pathname;
+      lab = path === "/combined/lab";
+      if (lab) labStarted = true;
+      if (previous !== path) {
+        previous = path;
+        log(`SPA → ${path}. Same HTML document; mounted state retained.`, "navigation");
+      }
+      router.commit();
+    });
+    return () => {
+      stop();
+      router.destroy();
+    };
+  });
+  effect(() => {
+    if (!tour) return;
+    const panel = guide.current!;
+    const restore = portal(panel);
+    const place = () =>
+      position(panel, guideButton.current!, {
+        placement: "bottom-end",
+        offset: 12,
+        shift: true,
+        viewportPadding: 16,
+      });
+    place();
+    const focus = trapFocus(panel);
+    window.addEventListener("resize", place);
+    return () => {
+      focus();
+      restore();
+      window.removeEventListener("resize", place);
+    };
+  });
+  effect(() => {
+    if (!props.interactive) return;
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") tour = false;
+      if (
+        event.key === "/" &&
+        !(event.target instanceof HTMLInputElement) &&
+        !(event.target instanceof HTMLTextAreaElement)
+      ) {
+        event.preventDefault();
+        desk.current?.querySelector<HTMLInputElement>("#search")?.focus();
+      }
+    };
+    document.addEventListener("keydown", keydown);
+    return () => document.removeEventListener("keydown", keydown);
+  });
+  return (
+    <>
+      <header class={"topbar"}>
+        <a href={"/"} class={"brand"}>
+          <span class={"brand-mark"}>{"p"}</span>
+          {"publr"}
+          <span class={"brand-divider"}>{"/"}</span>
+          <span class={"brand-project"}>{"Team desk"}</span>
+        </a>
+        <a class={"button"} href={"/"}>
+          {"← Isolated examples"}
+        </a>
+        <button
+          ref={guideButton}
+          onClick={() => (tour = !tour)}
+          id="guide-button"
+          class={"button guide-button"}
+          aria-expanded={tour}
+          aria-controls={"guide"}
+        >
+          {" Take a little tour "}
+          <span>{"↗"}</span>
+        </button>
+      </header>
+      <main class={"page"}>
+        <div class={"nav-row"}>
+          <nav aria-label={"Demo pages"}>
+            <a href={"/combined"} data-page="/combined" aria-current={!lab ? "page" : "false"}>
+              {"The directory"}
+            </a>
+            <a
+              href={"/combined/lab"}
+              data-page="/combined/lab"
+              aria-current={lab ? "page" : "false"}
+            >
+              {"Runtime lab ↗"}
+            </a>
+          </nav>
+          <div class="mode-switch" hidden={lab} aria-label={"Directory rendering mode"}>
+            <button id="native-mode" aria-pressed={!client} onClick={() => location.reload()}>
+              {"Native SSR"}
+            </button>
+            <button id="client-mode" aria-pressed={client} onClick={clientMount}>
+              {"Client mount"}
+            </button>
+          </div>
+        </div>
+        <div class={"workspace"}>
+          <div class={"main-column"}>
+            <div id="directory-page" hidden={lab}>
+              <div ref={desk} id="desk">
+                {props.interactive ? "" : "__PUBLR_SLOT_SSR__"}
+              </div>
+              <p id="bridge-help" class="bridge-help" hidden={!client}>
+                {" HTML adapters are shown in Native SSR mode. "}
+              </p>
+            </div>
+            <section id="lab-page" hidden={!lab}>
+              <div class={"section-heading"}>
+                <div>
+                  <p class={"eyebrow"}>{"STATE, OWNERS AND A SHARED CACHE"}</p>
+                  <h1>
+                    {"Runtime lab"}
+                    <span class={"accent"}>{"."}</span>
+                  </h1>
+                </div>
+              </div>
+              <div id="counters" class="counter-grid">
+                {labStarted && (
+                  <>
+                    <Counter initial={2} label="Counter A" />
+                    {counterMounted ? (
+                      <Counter initial={7} label="Counter B" />
+                    ) : (
+                      <div class="retired-counter">
+                        <span>○</span>
+                        <strong>Owner retired.</strong>
+                        <p>
+                          Its effect and cleanup are gone.
+                          <br />
+                          Mount a fresh instance to start again.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              <div class={"sandbox-toolbar"}>
+                <span>{"Each counter owns its state. Snapshots keep their initial value."}</span>
+                <button
+                  id="toggle-counter"
+                  onClick={() => (counterMounted = !counterMounted)}
+                  class={"text-button"}
+                >
+                  {counterMounted ? "Unmount counter B" : "Mount a fresh counter B"}
+                </button>
+              </div>
+              <div id="cache">{labStarted && <CacheLab />}</div>
+              <div class={"lab-note"}>
+                <p>
+                  {"The directory stays mounted across these tabs. Your notes survive the trip."}
+                </p>
+              </div>
+            </section>
+          </div>
+          <aside class={"inspector"}>
+            <div class={"inspector-heading"}>
+              <span class={"live-dot"} />
+              <span>{"ACTIVITY"}</span>
+              <button
+                id="clear-log"
+                onClick={() => (events = [])}
+                aria-label={"Clear the notebook"}
+              >
+                {"↺"}
+              </button>
+            </div>
+            <p id={"render-mode"} class={"render-mode"}>
+              {client
+                ? "Directory: client DOM mount. Initial data fetched in the browser."
+                : "Directory: Zig SSR, then hydration. Zero initial client operations."}
+            </p>
+            <div class={"inspector-stats"} id={"notebook-stats"}>
+              <div>
+                <strong id="request-count">{requests}</strong>
+                <span>{"client operations"}</span>
+              </div>
+              <div>
+                <strong id="owner-count">{owners}</strong>
+                <span>{"card owners"}</span>
+              </div>
+            </div>
+            <div class={"notebook-note"}>
+              <p>
+                {
+                  " Star Ada, leave a note, then reverse the order. Her card and local state move together. "
+                }
+              </p>
+            </div>
+            <ol id="event-log" class="event-log" aria-live="polite" aria-label="Activity log">
+              {events.map((item) => (
+                <li key={item.id} data-kind={item.kind}>
+                  <span class="log-kind">{item.kind}</span>
+                  <p>{item.message}</p>
+                </li>
+              ))}
+            </ol>
+          </aside>
+        </div>
+        <footer>
+          <span>
+            {"The combined example. "}
+            <a href={"/"}>{"Inspect one mechanism at a time →"}</a>
+          </span>
+          <span>{"PTSX → Zig + DOM"}</span>
+        </footer>
+      </main>
+      {!props.interactive && (
+        <template id="bridge-template">
+          <aside class={"html-bridge"}>
+            <span class={"bridge-icon"}>{"↔"}</span>
+            <div>
+              <strong>{"Same state, a little HTML."}</strong>
+              <p>
+                {"HTML reads the search: "}
+                <span class={"bridge-value"} data-p-text={"$search"} />
+              </p>
+            </div>
+            <button class={"text-button"} data-p-on={"click:reset"}>
+              {"Reset from HTML ↗"}
+            </button>
+          </aside>
+        </template>
+      )}
+      <div ref={guide} id="guide" role="dialog" aria-label="A little tour" hidden={!tour}>
+        <div class={"panel-heading"}>
+          <h3>{"Five things to try"}</h3>
+          <button id="close-guide" onClick={() => (tour = false)} aria-label={"Close tour"}>
+            {"×"}
+          </button>
+        </div>
+        <ol>
+          <li>{"Star a card and write a note."}</li>
+          <li>{"Reverse or search slowly; the last result stays mounted."}</li>
+          <li>{"Simulate a failure, then retry."}</li>
+          <li>{"The summary waits for the directory result."}</li>
+          <li>{"Visit the lab for independent counters and a shared cache."}</li>
+        </ol>
+        <p>{"This dialog uses portal, position and trapFocus. Escape closes it."}</p>
+      </div>
+    </>
+  );
+}

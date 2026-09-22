@@ -1,0 +1,78 @@
+.portal-preview {
+  display: block;
+  width: 100%;
+  height: 190px;
+  border: 0;
+  background: var(--theme-surface, #fff);
+}
+.portal-frame {
+  margin: 0;
+  padding: 12px;
+  font-size: 14px;
+}
+.portal-clip {
+  position: relative;
+  overflow: hidden;
+  height: 166px;
+  padding: 12px;
+  border: 1px dashed var(--theme-line, #8892a5);
+  border-radius: 6px;
+  background: var(--theme-surface, #f6f7fb);
+  text-align: left;
+}
+.portal-label {
+  color: var(--theme-muted, #586171);
+  font-size: 11px;
+}
+.portal-clip h3,
+.portal-panel h3 {
+  margin: 8px 0;
+  font-size: 16px;
+}
+.portal-clip p,
+.portal-panel p {
+  margin: 6px 0;
+}
+.portal-frame button {
+  background: #000;
+  color: white;
+  border: 0;
+  border-radius: 5px;
+  padding: 8px 10px;
+  margin: 6px 4px 0 0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.portal-frame button:hover {
+  background: #333;
+}
+.portal-panel {
+  position: absolute;
+  top: 146px;
+  left: 24px;
+  width: calc(100vw - 48px);
+  padding: 14px;
+  border: 1px solid var(--theme-blue-line, #6470bc);
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 5px 16px #20232a1a;
+  text-align: left;
+}
+.portals-lesson .walkthrough-browser {
+  width: 100%;
+  max-width: 380px;
+}
+.portals-lesson .walkthrough-demo {
+  display: block;
+  padding: 0;
+}
+
+.portal-frame #app:empty::after {
+  content: "App placeholder";
+  display: block;
+  border: 1px dashed var(--theme-line, #cbd1e1);
+  padding: 24px 8px;
+  text-align: center;
+  color: var(--theme-muted, #8892a5);
+}

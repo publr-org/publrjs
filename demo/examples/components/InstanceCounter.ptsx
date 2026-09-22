@@ -1,0 +1,14 @@
+import { state } from "publr";
+
+export function InstanceCounter(props: { initial: number }) {
+  let count = state(props.initial);
+
+  function increment() { count++; }
+
+  return (
+    <div class="lesson-counter">
+      <output aria-label="Count">{count}</output>
+      <button onClick={increment}>Increment</button>
+    </div>
+  );
+}

@@ -1,0 +1,26 @@
+<section
+  class="lesson-people"
+  data-p-store="ResilientSearch"
+  data-p-bind="aria-busy:$people.isPending"
+>
+  <label
+    >Search people
+    <input data-p-bind="value:$search" data-p-on="input:updateSearch" />
+  </label>
+  <p
+    data-p-text="$people.isPending -> 'Waiting for people…' ~ $people.isError -> 'Could not update people' ~ 'Up to date'"
+  ></p>
+  <p
+    data-p-show="not $people.isLoaded"
+    data-p-text="$people.isError -> 'No people loaded yet.' ~ 'Loading people…'"
+  ></p>
+  <p role="alert" data-p-show="$people.isError">
+    <span data-p-text="$people.error.message"></span>
+    <button data-p-on="click:retry">Retry</button>
+  </p>
+  <ul data-p-show="$people.isLoaded">
+    <template data-p-for="person of $people.value" data-p-key="person.id">
+      <li data-p-text="person.name"></li>
+    </template>
+  </ul>
+</section>

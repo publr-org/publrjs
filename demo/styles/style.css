@@ -1,0 +1,6 @@
+@import "./combined/base.css";
+@import "./combined/directory.css";
+@import "./combined/inspector.css";
+@import "./combined/lab.css";
+@import "./combined/status.css";
+@import "./combined/responsive.css";

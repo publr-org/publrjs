@@ -1,0 +1,43 @@
+.walkthrough-code-card {
+  min-width: 0;
+}
+.walkthrough-code-label {
+  margin-bottom: 0.45rem;
+  color: var(--theme-muted, #56606e);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.walkthrough-code {
+  padding: 0.8rem;
+  background: var(--theme-surface, #fff);
+  border: 1px solid var(--theme-line, #e1e5eb);
+  border-radius: 6px;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.8;
+}
+.walkthrough-code mark {
+  background: var(--theme-surface-soft, #e8ecfc);
+  color: var(--theme-blue-ink, #3048a6);
+  border-radius: 2px;
+}
+.walkthrough-code mark.store-highlight {
+  background: var(--theme-surface-raised, #def3e5);
+  color: var(--theme-green-ink, #21643d);
+}
+.walkthrough-action-example {
+  display: block;
+  margin-top: 0.65rem;
+  color: var(--theme-blue-ink, #3048a6);
+}
+.walkthrough-cue,
+.walkthrough-code-card {
+  text-align: left;
+}

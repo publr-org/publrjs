@@ -1,0 +1,82 @@
+import { reactive, awaited, mutation } from "publr";
+import * as dom from "publr/dom";
+import { readPeople, peopleKey, savePerson } from "./request.js";
+
+function PeopleReader(label, search) {
+  const people = awaited(() => readPeople(search()), {
+    cache: () => ({ key: peopleKey(search()), ttl: 60000, tags: ["people"] })
+  });
+
+  return dom.element("section", (reader) => {
+    dom.classes(reader, () => "query-reader");
+    dom.attr(reader, "aria-busy", () => people.isPending);
+    dom.append(reader, dom.element("h3", (heading) => {
+      dom.append(heading, dom.literal(label));
+    }));
+    dom.append(reader, dom.element("p", (status) => {
+      dom.classes(status, () => "people-status");
+      dom.append(status, dom.insert(() =>
+        people.isPending ? "Waiting for people…" : "Up to date"
+      ));
+    }));
+    dom.append(reader, dom.when(
+      () => people.isLoaded,
+      () => dom.element("ul", (list) => {
+        dom.append(list, dom.list(
+          () => people.value,
+          person => person.id,
+          person => dom.element("li", (row) => {
+            dom.append(row, dom.insert(() => person().name));
+          })
+        ));
+      }),
+      () => dom.element("p", (loading) => {
+        dom.append(loading, dom.literal("Loading people…"));
+      })
+    ));
+  });
+}
+
+export function SharedPeople() {
+  const state = reactive({ search: "" });
+  const addPerson = mutation(async () => await savePerson());
+  function showAll() { state.search = ""; }
+  function showAda() { state.search = "Ada"; }
+  function add() {
+    if (state.search === "") addPerson();
+  }
+
+  return dom.element("section", (section) => {
+    dom.classes(section, () => "lesson-query");
+    dom.append(section, dom.element("div", (actions) => {
+      dom.classes(actions, () => "query-actions");
+      for (const [label, action, search] of [
+        ["All people", showAll, ""],
+        ["Ada", showAda, "Ada"],
+        ["Add person and invalidate", add, null]
+      ]) {
+        dom.append(actions, dom.element("button", (button) => {
+          dom.append(button, dom.literal(label));
+          dom.event(button, "click", action);
+          dom.attr(button, "disabled", () => addPerson.isPending || (search === null && state.search !== ""));
+          if (search !== null) dom.attr(button, "aria-pressed", () => state.search === search);
+        }));
+      }
+    }));
+    dom.append(section, dom.element("p", (status) => {
+      dom.classes(status, () => "query-write-status");
+      dom.attr(status, "role", () => "status");
+      dom.append(status, dom.insert(() => addPerson.isPending ? "Saving…" : addPerson.value ? "Person saved." : "Ready to add a person."));
+    }));
+    dom.append(section, dom.when(() => state.search !== "", () => dom.element("p", (hint) => {
+      dom.classes(hint, () => "query-hint");
+      dom.append(hint, dom.literal("Choose All people to add a person."));
+    })));
+    dom.append(section, dom.when(() => addPerson.isError, () => dom.element("p", (error) => {
+      dom.attr(error, "role", () => "alert");
+      dom.append(error, dom.literal("Could not add a person. Try again."));
+    })));
+    dom.append(section, PeopleReader("Reader A", () => state.search));
+    dom.append(section, PeopleReader("Reader B", () => state.search));
+  });
+}

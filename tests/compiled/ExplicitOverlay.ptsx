@@ -1,0 +1,24 @@
+import { ref, state } from "publr";
+
+export function ExplicitOverlay() {
+  const trigger = ref<HTMLButtonElement>();
+  const target = ref<HTMLDivElement>();
+  let count = state(0);
+  let offset = state(8);
+
+  function increment() { count++; offset = 16; }
+
+  return (
+    <section class="explicit-overlay">
+      <button data-p-anchor>Decoy</button>
+      <button ref={trigger}>Anchor</button>
+      <aside class="custom" portal={target}
+        position={{ anchor: trigger, placement: "right-start", offset, flip: false, shift: false }}>
+        <button onClick={increment}>{count}</button>
+      </aside>
+      <aside class="selector" portal="#custom-portal">Selector</aside>
+      <aside class="inline" position={{ anchor: trigger, placement: "top-end", offset: 5 }}>Inline</aside>
+      <div id="custom-portal" ref={target}></div>
+    </section>
+  );
+}

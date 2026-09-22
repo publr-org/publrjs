@@ -1,0 +1,259 @@
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (min-width: 1450px) {
+  .page {
+    padding: 0 40px;
+  }
+  .workspace {
+    gap: 45px;
+    grid-template-columns: minmax(0, 1fr) 270px;
+  }
+  .member-card {
+    padding: 22px;
+  }
+  .member-role,
+  .note {
+    font-size: 11px;
+  }
+  .member-card h3 {
+    font-size: 15px;
+  }
+}
+@media (max-width: 1100px) {
+  .workspace {
+    gap: 22px;
+    grid-template-columns: minmax(0, 1fr) 220px;
+  }
+  .page {
+    padding: 0 25px;
+  }
+  .member-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .small-note {
+    display: none;
+  }
+  .sandbox-label {
+    display: none;
+  }
+  .section-heading {
+    gap: 8px;
+  }
+  h1 {
+    font-size: 48px;
+  }
+  .status-pill {
+    font-size: 9px;
+    margin-top: 28px;
+  }
+}
+@media (max-width: 760px) {
+  .topbar {
+    height: 73px;
+    padding: 0 20px;
+  }
+  .brand {
+    font-size: 21px;
+  }
+  .brand-project {
+    font-size: 12px;
+  }
+  .guide-button {
+    font-size: 0;
+    gap: 0;
+    padding: 8px 12px;
+  }
+  .guide-button span {
+    font-size: 18px;
+  }
+  .page {
+    padding: 0 19px;
+  }
+  .nav-row {
+    height: 76px;
+    margin-bottom: 26px;
+    gap: 10px;
+  }
+  .nav-row nav {
+    gap: 20px;
+  }
+  .nav-row nav a {
+    font-size: 11px;
+  }
+  .mode-switch button {
+    font-size: 9px;
+    padding: 6px 8px;
+  }
+  .workspace {
+    display: block;
+  }
+  .section-heading {
+    margin-top: 0;
+  }
+  .eyebrow {
+    font-size: 8px;
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-size: 45px;
+    letter-spacing: -2px;
+  }
+  .intro {
+    font-size: 10px;
+  }
+  .status-pill {
+    margin-top: 28px;
+    font-size: 8px;
+    padding: 7px 9px;
+  }
+  .controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .search-box {
+    flex-basis: 100%;
+  }
+  .controls > .button {
+    flex: 1;
+    height: 38px;
+  }
+  .experiment-bar {
+    gap: 13px;
+    padding: 16px 0;
+  }
+  .experiment-label {
+    width: 100%;
+    font-size: 7px;
+  }
+  .experiment-bar .text-button {
+    margin-left: auto;
+    font-size: 10px;
+  }
+  .member-card {
+    padding: 16px;
+  }
+  .member-card h3 {
+    font-size: 13px;
+  }
+  .member-role {
+    font-size: 9px;
+  }
+  .note {
+    font-size: 10px;
+  }
+  .result-meta {
+    font-size: 9px;
+  }
+  .html-bridge {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .html-bridge p {
+    font-size: 9px;
+  }
+  .html-bridge button {
+    margin-left: 42px;
+  }
+  .inspector {
+    margin-top: 30px;
+    min-height: 0;
+  }
+  .inspector-heading {
+    padding: 16px 19px;
+  }
+  .render-mode {
+    font-size: 13px;
+    padding: 16px 19px;
+  }
+  .inspector-stats {
+    gap: 55px;
+  }
+  .notebook-note {
+    margin: 17px 19px;
+  }
+  .notebook-note p,
+  .notebook-bottom p,
+  .event-log p {
+    font-size: 11px;
+  }
+  .event-log {
+    max-height: 190px;
+  }
+  .notebook-bottom {
+    padding: 17px 19px;
+  }
+  .counter-grid {
+    gap: 12px;
+  }
+  .counter-card,
+  .retired-counter {
+    padding: 18px;
+    height: 197px;
+  }
+  .counter-facts {
+    font-size: 9px;
+    gap: 10px;
+  }
+  .sandbox-toolbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sandbox-toolbar .text-button {
+    text-align: left;
+  }
+  .cache-card {
+    padding: 20px;
+  }
+  .panel-heading .button {
+    font-size: 10px;
+    padding: 9px 11px;
+  }
+  .panel-heading h3 {
+    font-size: 18px;
+  }
+  .panel-heading .eyebrow {
+    font-size: 7px;
+  }
+  .cache-footer {
+    line-height: 1.8;
+  }
+  .cache-footer span {
+    margin-left: 3px;
+  }
+  footer {
+    gap: 18px;
+    font-size: 8px;
+    line-height: 1.7;
+    margin-top: 30px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:before,
+  *:after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (max-width: 760px) {
+  .note {
+    font-size: 14px;
+  }
+  .search-box input {
+    font-size: 16px;
+  }
+  .member-card h3 {
+    font-size: 14px;
+  }
+  .note-label {
+    font-size: 8px;
+  }
+}

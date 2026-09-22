@@ -1,0 +1,160 @@
+import { state, effect } from "publr";
+import type { LessonOptions } from "../../chapters/types";
+import type { LessonPresentation } from "../../chapters/presentation";
+import { PreviewSurface } from "./PreviewSurface.ptsx";
+import { CodeInspector } from "./CodeInspector.ptsx";
+import { Term } from "./Term.ptsx";
+
+export function PageDebugger(props: {
+  key?: number;
+  options: LessonOptions;
+  presentation: LessonPresentation;
+  server: boolean;
+}) {
+  let phase = state(0);
+  let html = state<string | null>(null);
+  let snapshot = state<string | null>(null);
+  let loading = state(false);
+  let error = state(false);
+  const options = props.options;
+  const server = props.server;
+  let request = new AbortController();
+  effect(() => () => request?.abort());
+  const stages = options.awaitedLesson
+    ? ["Load page", server ? "Connect search" : "Render + request", "Explore requests"]
+    : options.sharedLesson
+      ? ["Load page", server ? "Connect" : "Render + connect", "Ready"]
+      : options.renderOnly
+        ? server
+          ? ["Load page", "Ready"]
+          : ["Load page", "Render", "Ready"]
+        : ["Load page", server ? "Hydrate" : "Render + hydrate", "Ready"];
+  const definition = options.awaitedLesson
+    ? server
+      ? "Publr connects the search input. The initial people are already in the HTML."
+      : "Publr creates the search UI and starts the first API request."
+    : options.renderOnly
+      ? "JavaScript creates the heading and adds it to the page."
+      : server
+        ? "Publr connects the existing HTML button to its JavaScript callback."
+        : "Publr creates the button and connects its click callback in the same setup.";
+  function loaded() {
+    loading = false;
+    phase = 1;
+  }
+  async function advance() {
+    if (phase === 0) {
+      request?.abort();
+      request = new AbortController();
+      const pending = request;
+      loading = true;
+      error = false;
+      try {
+        const response = await fetch(
+          props.presentation.previewURL + "?target=" + (server ? "ssr" : "csr"),
+          { signal: pending.signal },
+        );
+        if (!response.ok) throw new Error("Page request failed");
+        const result = await response.text();
+        if (!pending.signal.aborted) html = result;
+      } catch {
+        if (!pending.signal.aborted) {
+          error = true;
+          loading = false;
+        }
+      }
+    } else if (phase === 1 && !(options.renderOnly && server)) phase = 2;
+    else {
+      html = null;
+      snapshot = null;
+      phase = 0;
+    }
+  }
+  return (
+    <>
+      <div id="walkthrough-scene" class="walkthrough-scene page-debugger-content">
+        <ol
+          class="page-debugger-steps"
+          aria-label="Page setup progress"
+          style={"grid-template-columns:repeat(" + stages.length + ",1fr)"}
+        >
+          {stages.map((label, index) => (
+            <li
+              class={
+                "page-debugger-step" +
+                (index === phase ? " is-current" : index < phase ? " is-complete" : "")
+              }
+              aria-current={index === phase ? "step" : null}
+            >
+              <span class="page-debugger-number">{index < phase ? "✓" : String(index + 1)}</span>
+              <span class="page-debugger-label">
+                {index === 1 && !(options.renderOnly && server) ? (
+                  <Term text={label} definition={definition} />
+                ) : (
+                  <span>{label}</span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <div class="walkthrough-browser">
+          <div class="walkthrough-browser-bar">Page preview</div>
+          <div class={"walkthrough-demo" + (phase === 2 ? " is-interactive" : "")}>
+            {html === null ? (
+              <span class="walkthrough-empty">Page not loaded</span>
+            ) : (
+              <PreviewSurface
+                html={html}
+                options={options}
+                server={server}
+                active={phase === 2}
+                ready={loaded}
+                snapshot={(value) => (snapshot = value)}
+              />
+            )}
+          </div>
+        </div>
+        <div class="page-debugger-status" aria-live="polite">
+          <p class="page-debugger-explanation">
+            {error
+              ? "Could not load the page. Try again."
+              : loading
+                ? "The browser asks the server for the page."
+                : phase === 0
+                  ? "Simulate page load."
+                  : phase === 1
+                    ? props.presentation.loadedCopy(server)
+                    : props.presentation.readyCopy(server)}
+          </p>
+        </div>
+        <button
+          class="walkthrough-primary page-debugger-control"
+          type="button"
+          disabled={loading}
+          onClick={advance}
+        >
+          {loading
+            ? "Loading…"
+            : phase === 0
+              ? "Load Page"
+              : phase === 2 || (options.renderOnly && server)
+                ? "↺ Load again"
+                : options.awaitedLesson
+                  ? server
+                    ? "Connect search →"
+                    : "Render + request →"
+                  : options.sharedLesson
+                    ? server
+                      ? "Connect store →"
+                      : "Render + connect →"
+                    : options.renderOnly
+                      ? "Render →"
+                      : server
+                        ? "Hydrate"
+                        : "Render + hydrate →"}
+        </button>
+      </div>
+      <CodeInspector html={snapshot} annotation={props.presentation.previewCode("").annotation} />
+    </>
+  );
+}

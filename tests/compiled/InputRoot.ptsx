@@ -1,0 +1,5 @@
+import { state } from "publr";
+export function InputRoot(props: { initial: string }) {
+  let value = state(props.initial);
+  return <input value={value} onInput={event => value = event.currentTarget.value} />;
+}

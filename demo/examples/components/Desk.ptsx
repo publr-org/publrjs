@@ -1,0 +1,28 @@
+import { state, derived, awaited, refresh, Loading, effect } from "publr";
+import { fetchMembers, summarize } from "../../backend/team.zig";
+import { MemberCard } from "./MemberCard.ptsx";
+export function lookupMembers() { return fetchMembers("", false, false, 350); }
+export function Desk(props: { search: string }) {
+  let search = state(props.search);
+  let reversed = state(false);
+  let failing = state(false);
+  let delay = state(800);
+  const members = awaited(fetchMembers(search, reversed, failing, delay));
+  const summary = awaited(summarize(members));
+  const count = derived(() => members.length);
+  function reorder() { reversed = !reversed; }
+  function reload() { refresh(members); }
+  function fail() { failing = true; }
+  function retry() { failing = false; refresh(members); }
+  function reset() { search = ""; reversed = false; failing = false; }
+  effect(() => window.dispatchEvent(new CustomEvent("demo:effect", { detail: "Committed “" + search + "” · " + summary.label })));
+  return <section class="directory" aria-busy={members.isPending || summary.isPending}>
+    <div class="section-heading"><div><p class="eyebrow">A SMALL TEAM. A LIVE GRAPH.</p><h1>Good people,<br />in sync<span class="accent">.</span></h1><p class="intro">Write a note. Change the search. The little things stay put.</p></div><div class="status-pill" data-busy={members.isPending || summary.isPending}><span class="status-dot"></span>{members.isPending || summary.isPending ? "Updating…" : "All in sync"}</div></div>
+    <div class="controls"><label class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search name, role or team" value={search} onInput={(event) => search = event.currentTarget.value} aria-label="Search the team" /><kbd>/</kbd></label><button class="button" onClick={reorder}>{reversed ? "Order A → Z" : "Reverse order"}</button><button class="button" onClick={reload}>↻ Refresh</button></div>
+    <div class="experiment-bar"><span class="experiment-label">MAKE IT INTERESTING</span><label>Response <select value={delay} onChange={(event) => delay = Number(event.currentTarget.value)}><option value="150">Fast · 150ms</option><option value="800" selected>Slow · 800ms</option><option value="1800">Very slow · 1.8s</option></select></label><button class="text-button danger" onClick={fail}>Simulate a failure</button><span class="small-note">Notes and stars belong to each card.</span></div>
+    {members.isError && <div class="error-banner" role="alert"><div><strong>That request didn’t make it.</strong><span>Your last result and notes are still here.</span></div><button class="button" onClick={retry}>Try again</button></div>}
+    <Loading fallback={<div class="loading-state"><span class="loader"></span><h3>Meeting the team…</h3><p>There is no previous result to show yet.</p></div>} error={() => <div class="error-banner"><strong>Could not load the team.</strong><button class="button" onClick={retry}>Try again</button></div>}>
+      <div class="results"><div class="result-meta"><span><strong>{count}</strong> people in this view</span><span>{summary.label}</span></div><div class="member-grid">{members.map(member => <div class="member-slot" key={member.id}><MemberCard id={member.id} name={member.name} role={member.role} team={member.team} initials={member.initials} hue={member.hue} /></div>)}</div>{count === 0 && <div class="empty-state"><h3>No one here by that name.</h3><p>Try “design”, “engineer”, or clear the search.</p></div>}</div>
+    </Loading>
+  </section>;
+}

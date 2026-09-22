@@ -1,0 +1,33 @@
+import { Show, state, ref, effect } from "publr";
+import { trapFocus } from "publr/focus";
+
+export function Overlay() {
+  let open = state(false);
+  const panel = ref<HTMLElement>();
+  const trigger = ref<HTMLButtonElement>();
+
+  function toggle() {
+    open = !open;
+  }
+
+  function close() {
+    open = false;
+  }
+
+  effect(() => {
+    if (open && panel.current) {
+      return trapFocus(panel.current, { restoreFocusEl: trigger.current ?? undefined });
+    }
+  });
+
+  return (
+    <section>
+      <button ref={trigger} onClick={toggle}>Open</button>
+      <Show when={open}>
+        <aside ref={panel} portal position={{ anchor: trigger, placement: "bottom-end", offset: 8 }} onDismiss={close} role="dialog" aria-label="Example">
+          <button onClick={close}>Close</button>
+        </aside>
+      </Show>
+    </section>
+  );
+}

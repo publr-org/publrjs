@@ -1,0 +1,43 @@
+export function PreviewPath(props: { server: boolean; introduction: boolean }) {
+  return (
+    <section class="path" aria-labelledby={props.server ? "server-title" : "browser-title"}>
+      <h2 id={props.server ? "server-title" : "browser-title"}>
+        {props.server ? "Zig" : "JavaScript"}
+      </h2>
+      <p class="execution">{props.server ? "Runs on the server" : "Runs in the browser"}</p>
+      <div class="arrow" aria-hidden="true">
+        ↓
+      </div>
+      {props.introduction && <h3>{props.server ? "HTML response" : "Creates DOM elements"}</h3>}
+      <div
+        class="result"
+        id={props.server ? "server-result" : "browser-result"}
+        aria-live={props.introduction && !props.server ? "polite" : null}
+      >
+        {props.server ? "__PUBLR_SLOT_GREETING__" : ""}
+      </div>
+      {props.introduction && !props.server && (
+        <noscript>This path needs JavaScript enabled.</noscript>
+      )}
+      {props.introduction && (
+        <p class="explanation">
+          {props.server
+            ? "The greeting arrives with the page."
+            : "The greeting is created after the page arrives."}
+        </p>
+      )}
+      <span data-walkthrough-host={props.server ? "zig" : "javascript"} style="display:contents">
+      <button
+        class="how-it-works"
+        type="button"
+        data-walkthrough={props.server ? "zig" : "javascript"}
+        aria-haspopup="dialog"
+        aria-label={props.server ? "How the Zig demo works" : "How the JavaScript demo works"}
+        hidden
+      >
+        How it works <span aria-hidden="true">↗</span>
+      </button>
+      </span>
+    </section>
+  );
+}

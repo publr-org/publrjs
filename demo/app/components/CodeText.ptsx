@@ -1,0 +1,25 @@
+import { derived } from "publr";
+import type { Annotation } from "../walkthrough/content";
+import { tokenize, snippetLanguage } from "../code/tokenize";
+export function CodeText(props: { source: string; label: string; annotation?: Annotation }) {
+  const segments = derived(() =>
+    tokenize(props.source, snippetLanguage(props.label), props.annotation),
+  );
+  return (
+    <code data-syntax={snippetLanguage(props.label)}>
+      {segments.map((segment) => (
+        <>
+          {segment.mark !== null ? (
+            <mark class={segment.mark}>
+              <span class={"syntax-token " + segment.syntax}>{segment.text}</span>
+            </mark>
+          ) : (
+            <span class={segment.syntax ? "syntax-token " + segment.syntax : ""}>
+              {segment.text}
+            </span>
+          )}
+        </>
+      ))}
+    </code>
+  );
+}

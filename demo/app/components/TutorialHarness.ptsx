@@ -1,0 +1,87 @@
+import type { TutorialSession } from "../walkthrough/session";
+import { Walkthrough } from "./Walkthrough.ptsx";
+import { Comparison } from "./Comparison.ptsx";
+import { PreviewSurface } from "./PreviewSurface.ptsx";
+import { FileTabs } from "./LessonContent.ptsx";
+import { CodeText } from "./CodeText.ptsx";
+import { codeCard } from "../walkthrough/content";
+export function TutorialHarness(props: { session: TutorialSession }) {
+  return (
+    <>
+      <Walkthrough session={props.session} />
+      <Comparison session={props.session} />
+    </>
+  );
+}
+export function WalkthroughLaunch(props: { session: TutorialSession; server: boolean }) {
+  function open(event: Event) {
+    const opener = event.currentTarget as HTMLElement;
+    props.session.returnFocus = () => opener.focus();
+    props.session.walkthrough = props.server ? "zig" : "javascript";
+  }
+  return (
+    <button
+      class="how-it-works"
+      type="button"
+      data-walkthrough={props.server ? "zig" : "javascript"}
+      aria-haspopup="dialog"
+      aria-label={props.server ? "How the Zig demo works" : "How the JavaScript demo works"}
+      onClick={open}
+    >
+      How it works <span aria-hidden="true">↗</span>
+    </button>
+  );
+}
+export function CompareLaunch(props: { session: TutorialSession }) {
+  function open(event: Event) {
+    const opener = event.currentTarget as HTMLElement;
+    props.session.returnFocus = () => opener.focus();
+    props.session.comparison = true;
+  }
+  return (
+    <button
+      hidden={!props.session.compareVisible}
+      id="compare-open"
+      class="walkthrough-secondary"
+      type="button"
+      aria-haspopup="dialog"
+      onClick={open}
+    >
+      Compare
+    </button>
+  );
+}
+export function MainPreview(props: { session: TutorialSession; server: boolean; html: string }) {
+  return (
+    <PreviewSurface
+      options={props.session.options}
+      html={props.html}
+      server={props.server}
+      active={true}
+      controlled={false}
+    />
+  );
+}
+export function SourcePanel(props: {
+  filename: string;
+  files: { name: string; source: string }[];
+}) {
+  const files = props.files.map((file) => ({
+    name: file.name,
+    card: codeCard(file.name, file.source.trim()),
+  }));
+  return (
+    <>
+      {props.files.length > 1 ? (
+        <FileTabs files={files} plain={true} />
+      ) : (
+        <>
+          <h2 id="source-title">{props.filename}</h2>
+          <pre>
+            <CodeText source={props.files[0].source} label={props.filename} />
+          </pre>
+        </>
+      )}
+    </>
+  );
+}

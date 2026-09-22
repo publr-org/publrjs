@@ -1,0 +1,55 @@
+import { For, Repeat, Show, Switch, Match, state, derived } from "publr";
+
+type Row = { id: number; name: string };
+
+export function Helpers(props: { rows: Row[] }) {
+  let rows = state(props.rows);
+  let user = state<Row | null>(props.rows[0]);
+  let from = state(0);
+  let search = state("");
+  const filtered = derived(() => rows.filter((row) => row.name.toLowerCase().includes(search.toLowerCase())));
+
+  function replace() {
+    rows = [{ id: 2, name: "Second" }, { id: 1, name: "Updated" }];
+    user = rows[1];
+    from = 1;
+  }
+
+  function hide() {
+    user = null;
+    search = "missing";
+  }
+
+  return (
+    <section>
+      <button onClick={replace}>Replace</button>
+      <button onClick={hide}>Hide</button>
+      <Show when={user} fallback={<p>Signed out</p>}>
+        <p>{user.name}</p>
+      </Show>
+      <ul>
+        <For each={filtered} key={(row) => row.id} fallback={<li>Empty</li>}>
+          {(row, index) => {
+            const snapshot = row.name;
+            let clicks = state(0);
+
+            return (
+              <li data-snapshot={snapshot} data-clicks={clicks} onClick={() => clicks++}>
+                {index + 1}. {row.name}
+              </li>
+            );
+          }}
+        </For>
+      </ul>
+      <ol>
+        <Repeat from={from} count={Math.max(0, Math.min(2, rows.length - from))}>
+          {(index) => <li>{rows[index].name}</li>}
+        </Repeat>
+      </ol>
+      <Switch fallback={<b>No match</b>}>
+        <Match when={user}><b>{user.name}</b></Match>
+        <Match when={search === "missing"}><b>Missing</b></Match>
+      </Switch>
+    </section>
+  );
+}

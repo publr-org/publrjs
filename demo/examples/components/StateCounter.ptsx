@@ -1,0 +1,13 @@
+import { state } from "publr";
+
+export function StateCounter() {
+  let count = state(0);
+  function increment() { count++; }
+
+  return (
+    <div class="lesson-counter">
+      <output aria-label="Count">{count}</output>
+      <button onClick={increment}>Increment</button>
+    </div>
+  );
+}

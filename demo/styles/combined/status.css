@@ -1,0 +1,106 @@
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 16px 18px;
+  background: var(--theme-surface-soft, #fcf1e8);
+  border: 1px solid var(--theme-amber-line, #efdcce);
+  border-radius: 10px;
+  margin-top: 18px;
+  color: var(--theme-amber-ink, #a3775b);
+  font-size: 12px;
+}
+.error-banner strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+}
+.error-banner span {
+  display: block;
+  font-size: 10px;
+  margin-top: 5px;
+}
+.loading-state,
+.empty-state {
+  border: 1px dashed var(--theme-line, #d6ded0);
+  border-radius: 14px;
+  text-align: center;
+  padding: 65px 25px;
+  margin-top: 20px;
+  color: var(--theme-muted, #a3ad99);
+  background: var(--theme-surface-soft, #f4f7ed);
+  min-height: 285px;
+}
+.loading-state h3,
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+.loading-state p,
+.empty-state p {
+  font-size: 12px;
+}
+.loader {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--theme-line, #d5ddcc);
+  border-top-color: var(--theme-purple-line, #8d7db8);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  margin-top: 40px;
+  padding: 23px 0 35px;
+  font-size: 9px;
+  color: var(--theme-muted, #a5ad9c);
+}
+.footer-dot {
+  font-size: 7px;
+  color: var(--theme-muted, #a795c3);
+  margin-left: 12px;
+}
+#guide {
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  background: var(--theme-surface, #fff);
+  border: 1px solid var(--theme-line, #dfdbe7);
+  border-radius: 15px;
+  padding: 22px;
+  box-shadow: 0 12px 45px #32274025;
+}
+#guide h3 {
+  font-size: 17px;
+}
+#guide button {
+  font-size: 24px;
+  color: var(--theme-muted, #a393b4);
+}
+#guide ol {
+  padding-left: 17px;
+  margin: 20px 0;
+}
+#guide li {
+  font-size: 12px;
+  color: var(--theme-muted, #8b7e98);
+  line-height: 1.8;
+  margin: 10px 0;
+  padding-left: 3px;
+}
+#guide strong {
+  color: var(--theme-muted, #61546e);
+  font-weight: 550;
+}
+#guide > p {
+  font-size: 10px;
+  color: var(--theme-muted, #a39aaa);
+  line-height: 1.8;
+  border-top: 1px solid var(--theme-line, #eee9f2);
+  padding-top: 12px;
+}

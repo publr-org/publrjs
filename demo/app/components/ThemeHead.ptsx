@@ -1,0 +1,9 @@
+export function ThemeHead() {
+  return (
+    <>
+      <script src="/theme-init.js" />
+      <link rel="stylesheet" href="/theme.css" />
+      <script type="module" src="/app.js" />
+    </>
+  );
+}

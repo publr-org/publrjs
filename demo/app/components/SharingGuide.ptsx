@@ -1,0 +1,182 @@
+import { state, effect, ref } from "publr";
+import type { LessonOptions } from "../../chapters/types";
+import { tabSelection } from "../walkthrough/tabs";
+import { FileTabs } from "./LessonContent.ptsx";
+import { codeCard } from "../walkthrough/content";
+import { counter } from "../../examples/state/shared-counter";
+
+export type SharingState = { shared: boolean; busy: boolean; error: string };
+export function SharingGuide(props: {
+  model: SharingState;
+  localLesson: LessonOptions;
+  sharedLesson: LessonOptions;
+  setLesson: (options: LessonOptions, html: string) => void;
+}) {
+  const dialog = ref<HTMLDialogElement>();
+  const launch = ref<HTMLButtonElement>();
+  const next = ref<HTMLButtonElement>();
+  let opened = state(false);
+  const tabs = tabSelection();
+  let request = new AbortController();
+  const files = [
+    {
+      name: "shared-counter.ts",
+      card: {
+        ...codeCard("shared-counter.ts", props.sharedLesson.sharedLesson!.storeSource.trim()),
+        description: "Create count and increment once. Both views will use this store.",
+        annotation: { state: true, shared: true, action: "increment" },
+      },
+    },
+    {
+      name: "SharedCounter.ptsx",
+      card: {
+        ...codeCard("SharedCounter.ptsx", props.sharedLesson.source.trim()),
+        description: "The same PTSX still compiles to Zig and JavaScript. Both now use counter.",
+        annotation: { state: true, shared: true, action: "increment" },
+      },
+    },
+  ];
+  effect(() => {
+    if (opened) {
+      dialog.current!.showModal();
+      document.body.classList.add("walkthrough-open");
+    } else {
+      dialog.current?.close();
+      document.body.classList.remove("walkthrough-open");
+    }
+    return () => request.abort();
+  });
+  function close() {
+    opened = false;
+    launch.current?.focus();
+  }
+  async function changeMode(shared: boolean) {
+    request.abort();
+    request = new AbortController();
+    const pending = request;
+    props.model.busy = true;
+    props.model.error = "";
+    try {
+      const response = await fetch(
+        `/learn/${shared ? "shared-state" : "state"}/preview?target=ssr`,
+        { signal: pending.signal },
+      );
+      if (!response.ok) throw new Error("Could not load counters");
+      const html = await response.text();
+      if (pending.signal.aborted) return;
+      if (shared) counter.count = 0;
+      props.setLesson(shared ? props.sharedLesson : props.localLesson, html);
+      props.model.shared = shared;
+      close();
+    } catch {
+      if (!pending.signal.aborted) props.model.error = "Could not load the counters. Try again.";
+    } finally {
+      props.model.busy = false;
+    }
+  }
+  function open() {
+    if (props.model.shared) {
+      void changeMode(false);
+      return;
+    }
+    tabs.select("sharing-file", 0);
+    props.model.error = "";
+    opened = true;
+  }
+  function advance() {
+    if (!tabs.move(1)) void changeMode(true);
+  }
+  function back() {
+    tabs.move(-1);
+    next.current?.focus();
+  }
+  return (
+    <>
+      <button
+        ref={launch}
+        id="share-count"
+        class="walkthrough-secondary"
+        type="button"
+        aria-haspopup={props.model.shared ? null : "dialog"}
+        disabled={props.model.busy}
+        onClick={open}
+      >
+        {props.model.shared ? "↺ Separate the counts" : "Share the count"}
+      </button>
+      <dialog
+        ref={dialog}
+        id="sharing-guide"
+        class="walkthrough"
+        aria-labelledby="sharing-guide-title"
+        onClose={close}
+      >
+        <header class="walkthrough-header">
+          <p>Share the count</p>
+          <button
+            id="sharing-guide-close"
+            class="walkthrough-close"
+            type="button"
+            aria-label="Close sharing guide"
+            autofocus
+            onClick={close}
+          >
+            ×
+          </button>
+        </header>
+        <div class="walkthrough-copy">
+          <p id="sharing-guide-count" class="walkthrough-count">
+            {props.model.error}
+          </p>
+          <h2 id="sharing-guide-title">
+            {tabs.index("sharing-file") === 0
+              ? "Move the state outside."
+              : "Import it in the component."}
+          </h2>
+        </div>
+        <div id="sharing-guide-scene" class="walkthrough-scene">
+          {opened && <FileTabs idPrefix="sharing-file" files={files} selection={tabs} />}
+        </div>
+        <footer class="walkthrough-footer">
+          <button
+            id="sharing-guide-back"
+            class="walkthrough-secondary"
+            type="button"
+            disabled={props.model.busy || tabs.index("sharing-file") === 0}
+            onClick={back}
+          >
+            ← Previous
+          </button>
+          <button
+            ref={next}
+            id="sharing-guide-next"
+            class="walkthrough-primary"
+            type="button"
+            disabled={props.model.busy}
+            onClick={advance}
+          >
+            {tabs.index("sharing-file") === 0 ? "Connect the component →" : "Try shared count →"}
+          </button>
+        </footer>
+      </dialog>
+    </>
+  );
+}
+export function SharingExplanation(props: { model: SharingState }) {
+  return (
+    <span>
+      {props.model.shared
+        ? "One store, used by both targets. Click either button. Both counters change."
+        : "Each counter owns its count. Click either button. Only that counter changes."}
+    </span>
+  );
+}
+export function SharingResult(props: { model: SharingState }) {
+  return (
+    <span>
+      {props.model.error ||
+        (props.model.shared
+          ? "Click Increment. Both views share the same count."
+          : "Click Increment. Each counter keeps its own count.")}
+    </span>
+  );
+}

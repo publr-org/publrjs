@@ -1,0 +1,18 @@
+<section class="portal-clip" data-p-store="PersonDetails">
+  <p class="portal-label">Clipping container</p>
+  <h3>Ada Chen</h3>
+  <p>Thanks: <span data-p-text="$thanks">0</span></p>
+  <button data-p-on="click:showDetails" data-p-bind="aria-expanded:$open">Open details</button>
+  <aside
+    data-p-portal
+    data-p-bind="hidden:not $open"
+    hidden
+    class="portal-panel"
+    aria-label="Ada’s details"
+  >
+    <h3>Ada Chen</h3>
+    <p>Product designer</p>
+    <button data-p-on="click:thankAda">Thank Ada</button>
+    <button data-p-on="click:closeDetails">Close details</button>
+  </aside>
+</section>

@@ -1,0 +1,27 @@
+import { createLocalStore, awaited, mutation } from "publr";
+import { readPeople, peopleKey, savePerson } from "./request.js";
+
+createLocalStore("SharedPeople", ({ state }) => {
+  function reader() {
+    return awaited(() => readPeople(state.search), {
+      cache: () => ({
+        key: peopleKey(state.search), ttl: 60000, tags: ["people"]
+      })
+    });
+  }
+
+  const addPerson = mutation(async () => await savePerson());
+
+  return {
+    state: {
+      search: "", addPerson,
+      get canAdd() { return !addPerson.isPending && state.search === ""; },
+      first: reader(), second: reader()
+    },
+    actions: {
+      showAll() { state.search = ""; },
+      showAda() { state.search = "Ada"; },
+      add() { if (state.search === "") addPerson(); }
+    }
+  };
+});

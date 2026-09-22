@@ -1,0 +1,64 @@
+import { reactive, effect, hydrate, destroy, ref } from "publr";
+import { trapFocus } from "publr/focus";
+import * as dom from "publr/dom";
+
+export function FocusDetails() {
+  const anchor = ref();
+  const dialog = ref();
+  const state = reactive({ open: false, thanks: 0 });
+  function showDetails() { state.open = true; }
+  function closeDetails() { state.open = false; }
+  function thankAda() { state.thanks++; }
+
+  function text(tag, value, className) {
+    return dom.element(tag, (element) => {
+      if (className) dom.classes(element, () => className);
+      dom.append(element, dom.literal(value));
+    });
+  }
+  function button(label, action) {
+    return dom.element("button", (element) => {
+      dom.append(element, dom.literal(label));
+      dom.event(element, "click", action);
+    });
+  }
+
+  return dom.element("section", (container) => {
+    dom.classes(container, () => "focus-card");
+    dom.attr(container, "inert", () => state.open);
+    dom.append(container, text("h3", "Ada Chen"));
+    dom.append(container, dom.element("p", (count) => {
+      dom.append(count, dom.insert(() => "Thanks: " + state.thanks));
+    }));
+    const trigger = button("Open details", showDetails);
+    dom.reference(trigger, anchor);
+    dom.attr(trigger, "aria-expanded", () => state.open);
+    dom.append(container, trigger);
+    dom.append(container, dom.element("aside", (panel) => {
+      dom.classes(panel, () => "focus-panel");
+      dom.reference(panel, dialog);
+      dom.attribute(panel, "role", "dialog");
+      dom.attribute(panel, "aria-modal", "true");
+      dom.event(panel, "dismiss", closeDetails);
+      dom.attr(panel, "aria-label", () => "Ada’s details");
+      dom.attr(panel, "hidden", () => !state.open);
+      dom.append(panel, text("h3", "Ada Chen"));
+      dom.append(panel, text("p", "Product designer"));
+      dom.append(panel, button("Thank Ada", thankAda));
+      dom.append(panel, button("Close details", closeDetails));
+      dom.attribute(panel, "data-p-portal", "");
+      dom.attribute(panel, "data-p-position", {
+        anchor, placement: "bottom-start", offset: 8
+      });
+    }));
+    effect(() => {
+      if (state.open && dialog.current) {
+        return trapFocus(dialog.current);
+      }
+    });
+    effect(() => {
+      hydrate(container);
+      return () => destroy(container);
+    });
+  });
+}

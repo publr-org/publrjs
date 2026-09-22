@@ -1,0 +1,11 @@
+import { Counter } from "./Counter.ptsx";
+
+export function StaticShell() {
+  return (
+    <div class="static-shell">
+      <p>Fixed {7}</p>
+      <Counter initial={1} />
+      <Counter initial={5} />
+    </div>
+  );
+}

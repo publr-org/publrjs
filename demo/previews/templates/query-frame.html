@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>People API preview</title>
+    <link rel="stylesheet" href="/introduction.css" />
+    <link rel="stylesheet" href="/awaited.css" />
+    <script src="/theme-init.js"></script>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="awaited-frame query-frame">
+    <div id="preview" data-p-activation="manual"></div>
+    <div class="api-controls" id="api-controls" hidden>
+      <label class="pause-label"
+        ><input type="checkbox" id="pause-response" checked /> Pause response</label
+      >
+      <button type="button" id="respond-now" disabled>Respond now</button>
+    </div>
+    <p class="query-hint">Freshness is checked on reads. TTL is not a refresh timer.</p>
+    <p id="api-status" class="api-status" role="status">No browser request yet</p>
+    <script type="module" src="/query-frame.js"></script>
+  </body>
+</html>

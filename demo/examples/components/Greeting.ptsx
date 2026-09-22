@@ -1,0 +1,5 @@
+export function Greeting(props: { name: string }) {
+  return (
+    <p>Hello, <output>{props.name}</output>!</p>
+  );
+}

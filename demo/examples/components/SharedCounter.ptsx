@@ -1,0 +1,10 @@
+import { counter } from "../state/shared-counter";
+
+export function SharedCounter() {
+  return (
+    <div class="lesson-counter">
+      <output aria-label="Count">{counter.count}</output>
+      <button onClick={counter.increment}>Increment</button>
+    </div>
+  );
+}

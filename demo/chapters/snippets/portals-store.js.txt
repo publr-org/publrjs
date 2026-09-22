@@ -1,0 +1,10 @@
+import { createLocalStore } from "publr";
+
+createLocalStore("PersonDetails", () => ({
+  state: { open: false, thanks: 0 },
+  actions: ({ state }) => ({
+    showDetails() { state.open = true; },
+    closeDetails() { state.open = false; },
+    thankAda() { state.thanks++; }
+  })
+}));

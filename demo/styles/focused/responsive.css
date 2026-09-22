@@ -1,0 +1,82 @@
+@media (max-width: 1150px) {
+  .layout {
+    grid-template-columns: 195px minmax(0, 1fr);
+  }
+  main {
+    padding: 28px 22px;
+  }
+  .workbench {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 14px;
+  }
+  .inspection-tabs button {
+    padding: 0 6px;
+    font-size: 10px;
+  }
+}
+@media (max-width: 900px) {
+  .workbench {
+    grid-template-columns: 1fr;
+  }
+  .inspection-panel > [role="tabpanel"] {
+    height: 350px;
+  }
+}
+@media (max-width: 620px) {
+  .site-header {
+    padding: 0 18px;
+    height: 58px;
+  }
+  .site-header > a:first-child span {
+    font-size: 12px;
+  }
+  .site-header > a:last-child {
+    font-size: 11px;
+  }
+  .layout {
+    display: block;
+  }
+  .lesson-nav {
+    min-height: 0;
+    display: flex;
+    overflow-x: auto;
+    padding: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--theme-line, #e3e5e9);
+  }
+  .lesson-nav > p,
+  .nav-note {
+    display: none;
+  }
+  .lesson-nav a {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 10px;
+    font-size: 12px;
+  }
+  main {
+    padding: 25px 18px;
+  }
+  h1 {
+    font-size: 25px;
+  }
+  .steps {
+    font-size: 12px;
+  }
+  .preview-body {
+    padding: 18px;
+  }
+  .inspection-tabs {
+    justify-content: space-between;
+  }
+  .inspection-tabs button {
+    font-size: 11px;
+  }
+  footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+  #example input {
+    font-size: 16px;
+  }
+}

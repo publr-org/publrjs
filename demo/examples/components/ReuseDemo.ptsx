@@ -1,0 +1,10 @@
+import { InstanceCounter } from "./InstanceCounter.ptsx";
+
+export function ReuseDemo() {
+  return (
+    <section class="lesson-instances">
+      <InstanceCounter initial={0} />
+      <InstanceCounter initial={10} />
+    </section>
+  );
+}

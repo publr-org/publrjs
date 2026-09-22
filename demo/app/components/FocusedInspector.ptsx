@@ -1,0 +1,204 @@
+import { state, effect, ref } from "publr";
+import { observeOperations } from "publr/transport";
+import { observePreview } from "../../previews/session";
+import { tabKey } from "../walkthrough/tabs";
+
+type RequestEntry = { id: number; label: string; payload: string };
+export function FocusedInspector(props: {
+  initialHTML: string;
+  files: { name: string; label: string }[];
+}) {
+  const tabs = ref<HTMLDivElement>();
+  let selected = state(0);
+  let filename = state(props.files[0].name);
+  let source = state("Loading source…");
+  let live = state("");
+  let requests = state<RequestEntry[]>([]);
+  const labels = ["Source", "Response HTML", "Live DOM", "Requests"];
+  const names = ["source", "response", "dom", "requests"];
+  const showHTML = (value: string) =>
+    value.trim() || "<!-- Empty host: no example HTML in this response. -->";
+  effect(() => observePreview(document.getElementById("example")!, (value) => (live = value)));
+  effect(() => {
+    const request = new AbortController();
+    source = "Loading source…";
+    void fetch("/source/" + filename, { signal: request.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Source returned ${response.status}`);
+        return response.text();
+      })
+      .then((text) => {
+        if (!request.signal.aborted) source = text;
+      })
+      .catch((error) => {
+        if (!request.signal.aborted) source = String(error);
+      });
+    return () => request.abort();
+  });
+  effect(() => {
+    let count = 0;
+    let alive = true;
+    const stop = observeOperations((endpoint, args) => {
+      const id = ++count;
+      const path = new URL(endpoint, location.href).pathname;
+      const title = `#${id} ${path.split("/").at(-1)}`;
+      const payload = `POST ${path}\n\nPayload\n${JSON.stringify(args)}`;
+      const started = performance.now();
+      requests = [...requests, { id, label: title + " · pending", payload }];
+      function update(label: string, body = payload) {
+        if (alive)
+          requests = requests.map((item) => (item.id === id ? { id, label, payload: body } : item));
+      }
+      return (response, error) => {
+        const label =
+          title +
+          " · " +
+          (response
+            ? `${response.status} · ${Math.round(performance.now() - started)} ms`
+            : error instanceof Error
+              ? error.name
+              : "failed");
+        update(label);
+        if (response)
+          void response
+            .clone()
+            .text()
+            .then((text) => update(label, payload + "\n\nResponse\n" + text))
+            .catch(() => {});
+      };
+    });
+    return () => {
+      alive = false;
+      stop();
+    };
+  });
+  function keydown(event: KeyboardEvent, index: number) {
+    const next = tabKey(event, index, names.length);
+    if (next === null) return;
+    selected = next;
+    tabs.current?.querySelectorAll<HTMLButtonElement>("button")[next].focus();
+  }
+  return (
+    <>
+      <div ref={tabs} class="inspection-tabs" role="tablist" aria-label="Inspect example">
+        {names.map((name, index) => (
+          <button
+            role="tab"
+            id={"tab-" + name}
+            aria-controls={"panel-" + name}
+            aria-selected={selected === index}
+            tabIndex={selected === index ? 0 : -1}
+            data-panel={name}
+            onClick={() => (selected = index)}
+            onKeyDown={(event) => keydown(event, index)}
+          >
+            {labels[index]}
+            {index === 3 && <span id="request-count">{requests.length}</span>}
+          </button>
+        ))}
+      </div>
+      <div id="panel-source" role="tabpanel" aria-labelledby="tab-source" hidden={selected !== 0}>
+        <div class="source-toolbar">
+          <label class="sr-only" for="source-file">
+            Source file
+          </label>
+          <select
+            id="source-file"
+            value={filename}
+            onChange={(event) => (filename = event.currentTarget.value)}
+          >
+            {props.files.map((file) => (
+              <option value={file.name}>{file.label}</option>
+            ))}
+          </select>
+          <a id="source-link" href={"/source/" + filename} target="_blank" rel="noopener">
+            Open file ↗
+          </a>
+        </div>
+        <pre>
+          <code id="source-code">{source}</code>
+        </pre>
+      </div>
+      <div
+        id="panel-response"
+        role="tabpanel"
+        aria-labelledby="tab-response"
+        hidden={selected !== 1}
+      >
+        <p class="panel-note">
+          The example’s HTML from this document response, captured before activation. This snapshot
+          stays unchanged.
+        </p>
+        <pre>
+          <code id="response-code">{showHTML(props.initialHTML)}</code>
+        </pre>
+      </div>
+      <div id="panel-dom" role="tabpanel" aria-labelledby="tab-dom" hidden={selected !== 2}>
+        <p class="panel-note">
+          The current contents of <code>#example</code>. Updates as the example changes.
+        </p>
+        <pre>
+          <code id="dom-code">{showHTML(live)}</code>
+        </pre>
+      </div>
+      <div
+        id="panel-requests"
+        role="tabpanel"
+        aria-labelledby="tab-requests"
+        hidden={selected !== 3}
+      >
+        <p class="panel-note">
+          Only this example’s native operation calls (<code>/_publr/</code>). For full-page
+          requests, use DevTools Network → Doc.
+        </p>
+        <p id="no-requests" hidden={requests.length > 0}>
+          No operation requests.
+        </p>
+        <ol id="requests">
+          {requests.map((item) => (
+            <li key={item.id}>
+              <strong>{item.label}</strong>
+              <details>
+                <summary>Payload and response</summary>
+                <pre>{item.payload}</pre>
+              </details>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </>
+  );
+}
+export function FocusedControls(props: {
+  label: string;
+  initiallyEmpty: boolean;
+  start: () => Promise<string>;
+}) {
+  let busy = state(false);
+  let active = state(false);
+  let status = state("Paused. Inspect the initial HTML, then start.");
+  async function start() {
+    busy = true;
+    try {
+      status = await props.start();
+      active = true;
+    } catch (error) {
+      status = "Could not start: " + String(error);
+    } finally {
+      busy = false;
+    }
+  }
+  return (
+    <>
+      <p id="empty-host" hidden={!props.initiallyEmpty || active}>
+        The host is empty.
+      </p>
+      <button id="start" class="primary" disabled={busy || active} onClick={start}>
+        {active ? "Active" : props.label}
+      </button>
+      <p id="status" role="status">
+        {status}
+      </p>
+    </>
+  );
+}

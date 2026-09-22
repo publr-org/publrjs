@@ -1,0 +1,82 @@
+import { ChapterPage } from "../components/ChapterPage.ptsx";
+import { chapters } from "../../chapters/catalog";
+
+export function AwaitedPage() {
+  return <ChapterPage chapter={chapters["awaited"]} />;
+}
+
+export function CleanupPage() {
+  return <ChapterPage chapter={chapters["cleanup"]} />;
+}
+
+export function CompositionPage() {
+  return <ChapterPage chapter={chapters["composition"]} />;
+}
+
+export function ConditionalPage() {
+  return <ChapterPage chapter={chapters["conditional"]} />;
+}
+
+export function DerivedPage() {
+  return <ChapterPage chapter={chapters["derived"]} />;
+}
+
+export function EffectsPage() {
+  return <ChapterPage chapter={chapters["effects"]} />;
+}
+
+export function FailurePage() {
+  return <ChapterPage chapter={chapters["failure"]} />;
+}
+
+export function FocusPage() {
+  return <ChapterPage chapter={chapters["focus"]} />;
+}
+
+export function InputsPage() {
+  return <ChapterPage chapter={chapters["inputs"]} />;
+}
+
+export function InteractionPage() {
+  return <ChapterPage chapter={chapters["interaction"]} />;
+}
+
+export function IntroductionPage() {
+  return <ChapterPage chapter={chapters["introduction"]} />;
+}
+
+export function ListsPage() {
+  return <ChapterPage chapter={chapters["lists"]} />;
+}
+
+export function PortalsPage() {
+  return <ChapterPage chapter={chapters["portals"]} />;
+}
+
+export function PositionPage() {
+  return <ChapterPage chapter={chapters["position"]} />;
+}
+
+export function PropsPage() {
+  return <ChapterPage chapter={chapters["props"]} />;
+}
+
+export function QueryPage() {
+  return <ChapterPage chapter={chapters["query"]} />;
+}
+
+export function RefsPage() {
+  return <ChapterPage chapter={chapters["refs"]} />;
+}
+
+export function ReusePage() {
+  return <ChapterPage chapter={chapters["reuse"]} />;
+}
+
+export function StatePage() {
+  return <ChapterPage chapter={chapters["state"]} />;
+}
+
+export function SwitchPage() {
+  return <ChapterPage chapter={chapters["switch"]} />;
+}

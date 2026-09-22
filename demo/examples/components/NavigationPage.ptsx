@@ -1,0 +1,15 @@
+// Native HTML template. Browser navigation behavior lives in examples/navigation.ts.
+export function NavigationPage(props: { page: string }) {
+  return <section>
+    <h2>{props.page}</h2>
+    <label>Local draft <input placeholder="Type something to preserve" /></label>
+    <div class="link-row"><span>SPA</span>
+      <a href="/learn/navigation/a">Page A</a>
+      <a href="/learn/navigation/b">Page B</a>
+    </div>
+    <div class="link-row" data-p-router="off"><span>Full document</span>
+      <a href="/learn/navigation/a">Page A</a>
+      <a href="/learn/navigation/b">Page B</a>
+    </div>
+  </section>;
+}

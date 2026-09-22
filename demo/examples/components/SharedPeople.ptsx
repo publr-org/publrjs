@@ -1,0 +1,33 @@
+import { state, mutation } from "publr";
+import { savePerson } from "../state/query-write";
+import { PeopleReader } from "./PeopleReader.ptsx";
+
+export function SharedPeople() {
+  let search = state("");
+  const addPerson = mutation(async () => await savePerson());
+
+  function showAll() { search = ""; }
+  function showAda() { search = "Ada"; }
+  function add() {
+    if (search === "") addPerson();
+  }
+
+  return (
+    <section class="lesson-query">
+      <div class="query-actions">
+        <button onClick={showAll} disabled={addPerson.isPending} aria-pressed={search === ""}>All people</button>
+        <button onClick={showAda} disabled={addPerson.isPending} aria-pressed={search === "Ada"}>Ada</button>
+        <button onClick={add} disabled={addPerson.isPending || search !== ""}>
+          Add person and invalidate
+        </button>
+      </div>
+      <p class="query-write-status" role="status">
+        {addPerson.isPending ? "Saving…" : addPerson.value ? "Person saved." : "Ready to add a person."}
+      </p>
+      {search !== "" && <p class="query-hint">Choose All people to add a person.</p>}
+      {addPerson.isError && <p role="alert">Could not add a person. Try again.</p>}
+      <PeopleReader label="Reader A" search={search} />
+      <PeopleReader label="Reader B" search={search} />
+    </section>
+  );
+}

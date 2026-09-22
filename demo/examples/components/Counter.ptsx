@@ -1,0 +1,13 @@
+import { state, derived, effect } from "publr";
+export function Counter(props: { initial: number; label: string }) {
+  let count = state(props.initial);
+  const snapshot = count;
+  const doubled = derived(() => count * 2);
+  function increment() { count++; }
+  function decrement() { count--; }
+  effect(() => {
+    window.dispatchEvent(new CustomEvent("demo:effect", { detail: props.label + ": " + count + " → doubled " + doubled }));
+    return () => window.dispatchEvent(new CustomEvent("demo:cleanup", { detail: props.label }));
+  });
+  return <article class="counter-card"><p class="eyebrow">{props.label}</p><div class="stepper"><button onClick={decrement} aria-label={"Decrease " + props.label}>−</button><output>{count}</output><button onClick={increment} aria-label={"Increase " + props.label}>+</button></div><div class="counter-facts"><span>Derived <strong>{doubled}</strong></span><span>Snapshot <strong>{snapshot}</strong></span></div></article>;
+}

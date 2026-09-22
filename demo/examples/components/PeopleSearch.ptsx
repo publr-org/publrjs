@@ -1,0 +1,21 @@
+import { state, awaited, Loading } from "publr";
+import { findPeople } from "../../backend/people.zig";
+
+export function PeopleSearch() {
+  let search = state("");
+  const people = awaited(findPeople(search));
+
+  function updateSearch(event: Event) {
+    search = (event.currentTarget as HTMLInputElement).value;
+  }
+
+  return (
+    <section class="lesson-people" aria-busy={people.isPending}>
+      <label>Search people<input value={search} onInput={updateSearch} /></label>
+      <p class="people-status">{people.isPending ? "Waiting for people…" : "Up to date"}</p>
+      <Loading fallback={<p>Loading people…</p>}>
+        <ul>{people.map(person => <li key={person.id}>{person.name}</li>)}</ul>
+      </Loading>
+    </section>
+  );
+}

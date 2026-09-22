@@ -1,0 +1,15 @@
+import { state, effect } from "publr";
+export function MemberCard(props: { id: number; name: string; role: string; team: string; initials: string; hue: string }) {
+  let note = state("");
+  let starred = state(false);
+  function toggleStar() { starred = !starred; }
+  effect(() => {
+    window.dispatchEvent(new CustomEvent("demo:owner", { detail: { name: props.name, mounted: true } }));
+    return () => window.dispatchEvent(new CustomEvent("demo:owner", { detail: { name: props.name, mounted: false } }));
+  });
+  return <article class="member-card" data-member={props.id}>
+    <div class="member-top"><span class={"avatar " + props.hue}>{props.initials}</span><button class="star" onClick={toggleStar} aria-pressed={starred} aria-label={"Favorite " + props.name}>{starred ? "★" : "☆"}</button></div>
+    <h3>{props.name}</h3><p class="member-role">{props.role}</p><span class="team-tag">{props.team}</span>
+    <label class="note-label">YOUR NOTE<input class="note" placeholder="Add a note…" value={note} onInput={(event) => note = event.currentTarget.value} /></label>
+  </article>;
+}

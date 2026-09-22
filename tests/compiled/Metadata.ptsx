@@ -1,0 +1,23 @@
+import { awaited as waitFor, derived, valueOf, Loading, refresh } from "publr";
+import { profile, scalar } from "./backend/metadata.zig";
+
+export function Metadata() {
+  const data = waitFor(profile(), { cache: { ttl: 60000, tags: ["profiles"] } });
+  const number = waitFor(scalar());
+  const linked = derived(() => data);
+
+  function reload() {
+    refresh(data);
+  }
+
+  return (
+    <section aria-busy={data.isPending} data-error={data["isError"]}>
+      <button onClick={reload}>Refresh</button>
+      <Loading fallback={<i>Loading</i>}>
+        <p>{valueOf(data).error} / {valueOf(data).isPending} / {valueOf(data).isError}</p>
+        <span>{valueOf(number) === null ? "null" : "number"}</span>
+      </Loading>
+      <b aria-busy={linked.isPending} data-error={linked.isError}>Metadata</b>
+    </section>
+  );
+}

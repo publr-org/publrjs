@@ -1,0 +1,159 @@
+.counter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 35px;
+}
+.counter-card,
+.retired-counter {
+  background: var(--theme-surface, #fff);
+  border: 1px solid var(--line);
+  padding: 25px;
+  border-radius: 14px;
+  height: 204px;
+}
+.counter-card .eyebrow {
+  color: var(--theme-muted, #9583b1);
+}
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 15px 0 25px;
+}
+.stepper button {
+  border: 1px solid var(--theme-line, #e8e4ef);
+  background: var(--theme-surface, #f7f5fb);
+  width: 35px;
+  height: 35px;
+  border-radius: 9px;
+  color: var(--purple);
+  font-size: 22px;
+}
+.stepper output {
+  font:
+    500 36px Manrope,
+    sans-serif;
+}
+.counter-facts {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--theme-line, #f0edf4);
+  padding-top: 14px;
+  font-size: 10px;
+  color: var(--theme-muted, #9b95a5);
+}
+.counter-facts strong {
+  font-weight: 550;
+  margin-left: 6px;
+  color: var(--purple);
+}
+.sandbox-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 16px 0 25px;
+  font-size: 10px;
+  color: var(--theme-muted, #98a08d);
+  line-height: 1.6;
+}
+.sandbox-toolbar .text-button {
+  white-space: nowrap;
+}
+.cache-card {
+  background: var(--theme-surface, #fff);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 25px;
+}
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.panel-heading .eyebrow {
+  font-size: 8px;
+  margin-bottom: 10px;
+}
+.panel-heading h3 {
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  font-weight: 550;
+}
+.muted {
+  font-size: 11px;
+  color: var(--theme-muted, #98a18e);
+  line-height: 1.8;
+  margin-top: 12px;
+}
+.cache-readers {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: space-evenly;
+  background: var(--theme-surface-soft, #f5f7f0);
+  border-radius: 10px;
+  padding: 18px;
+  margin: 22px 0;
+}
+.cache-readers div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cache-readers span {
+  font-size: 10px;
+  color: var(--theme-muted, #96a18a);
+}
+.cache-readers strong {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--theme-muted, #718561);
+}
+.cache-readers .cache-link {
+  font-size: 26px;
+  color: var(--theme-muted, #c0cbb6);
+}
+.cache-footer {
+  font-size: 10px;
+  color: var(--theme-muted, #91a080);
+}
+.cache-footer span {
+  color: var(--theme-muted, #acb49d);
+  margin-left: 10px;
+}
+.lab-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin: 22px 0;
+  color: var(--theme-muted, #a4ae98);
+}
+.lab-note span {
+  color: var(--theme-muted, #ad9bbd);
+}
+.lab-note p {
+  font-size: 11px;
+  line-height: 1.9;
+}
+.retired-counter {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  background: var(--theme-surface-soft, #f4f3f7);
+  color: var(--theme-muted, #9c94ac);
+  border-style: dashed;
+  gap: 10px;
+}
+.retired-counter > span {
+  font-size: 22px;
+}
+.retired-counter strong {
+  font-size: 13px;
+}
+.retired-counter p {
+  font-size: 10px;
+  line-height: 1.8;
+}

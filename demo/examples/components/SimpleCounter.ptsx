@@ -1,0 +1,11 @@
+import { state } from "publr";
+
+export function SimpleCounter() {
+  let count = state(0);
+  function increment() { count++; }
+
+  return <div class="simple-counter">
+    <output aria-label="Count">{count}</output>
+    <button onClick={increment}>Increment</button>
+  </div>;
+}

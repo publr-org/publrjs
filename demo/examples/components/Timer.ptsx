@@ -1,0 +1,14 @@
+import { state, effect } from "publr";
+
+export function Timer() {
+  let ticks = state(0);
+
+  effect(() => {
+    const timer = window.setInterval(() => ticks++, 1000);
+    return () => window.clearInterval(timer);
+  });
+
+  return (
+    <p class="lesson-timer">Ticks: <output>{ticks}</output></p>
+  );
+}

@@ -1,0 +1,23 @@
+import { state } from "publr";
+
+export function NameInput() {
+  let name = state("Ada");
+
+  function reset() {
+    name = "Ada";
+  }
+
+  return (
+    <div class="lesson-input">
+      <label>
+        Name
+        <input
+          value={name}
+          onInput={(event) => (name = event.currentTarget.value)}
+        />
+      </label>
+      <p>Hello, {name}.</p>
+      <button onClick={reset}>Reset name</button>
+    </div>
+  );
+}

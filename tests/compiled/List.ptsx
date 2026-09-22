@@ -1,0 +1,5 @@
+import { state } from "publr";
+export function List(props: { items: { id: number; name: string }[] }) {
+  let items = state(props.items);
+  return <ul>{items.map(item => <li key={item.id}>{item.name}</li>)}</ul>;
+}

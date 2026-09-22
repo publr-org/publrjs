@@ -1,0 +1,25 @@
+import { state } from "publr";
+
+export function PersonDetails() {
+  let open = state(false);
+  let thanks = state(0);
+
+  function showDetails() { open = true; }
+  function closeDetails() { open = false; }
+  function thankAda() { thanks++; }
+
+  return (
+    <section class="portal-clip">
+      <p class="portal-label">Clipping container</p>
+      <h3>Ada Chen</h3>
+      <p>Thanks: {thanks}</p>
+      <button onClick={showDetails} aria-expanded={open}>Open details</button>
+      <aside portal hidden={!open} class="portal-panel" aria-label="Ada’s details">
+        <h3>Ada Chen</h3>
+        <p>Product designer</p>
+        <button onClick={thankAda}>Thank Ada</button>
+        <button onClick={closeDetails}>Close details</button>
+      </aside>
+    </section>
+  );
+}

@@ -1,0 +1,101 @@
+import { state, ref, effect } from "publr";
+import { groups } from "../../chapters/navigation";
+
+export function ChapterSidebar() {
+  const toggle = ref<HTMLButtonElement>();
+  const collapse = ref<HTMLButtonElement>();
+  const nav = ref<HTMLElement>();
+  let expanded = state(false);
+  try {
+    expanded = localStorage.getItem("publr:chapters-expanded") === "true";
+  } catch {}
+  function setExpanded(value: boolean) {
+    expanded = value;
+    try {
+      localStorage.setItem("publr:chapters-expanded", String(value));
+    } catch {}
+    queueMicrotask(() =>
+      (value ? collapse.current : toggle.current)?.focus({ preventScroll: true }),
+    );
+  }
+  effect(() => {
+    document.body.classList.toggle("chapters-expanded", expanded);
+    if (expanded && nav.current) {
+      const current = nav.current.querySelector<HTMLElement>('[aria-current="page"]');
+      if (current)
+        nav.current.scrollTop = Math.max(
+          0,
+          current.offsetTop - nav.current.offsetTop - nav.current.clientHeight / 2,
+        );
+    }
+    return () => document.body.classList.remove("chapters-expanded");
+  });
+  return (
+    <>
+      <button
+        ref={toggle}
+        id="chapter-menu"
+        class="chapter-menu-button"
+        type="button"
+        aria-label="Expand chapters"
+        aria-expanded={expanded}
+        aria-controls="chapter-sidebar"
+        hidden={expanded}
+        onClick={() => setExpanded(true)}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path
+            d="M3 5h14M3 10h14M3 15h14"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <aside
+        id="chapter-sidebar"
+        class="chapter-sidebar"
+        aria-labelledby="chapter-sidebar-title"
+        hidden={!expanded}
+      >
+        <header class="chapter-sidebar-header">
+          <h2 id="chapter-sidebar-title">Chapters</h2>
+          <button
+            ref={collapse}
+            type="button"
+            class="chapter-sidebar-close"
+            aria-label="Collapse chapters"
+            aria-controls="chapter-sidebar"
+            aria-expanded="true"
+            onClick={() => setExpanded(false)}
+          >
+            ‹
+          </button>
+        </header>
+        <nav ref={nav} aria-label="Chapters">
+          {groups.map((group) => (
+            <section>
+              <h3>{group.title}</h3>
+              <ul>
+                {group.chapters.map((chapter) => (
+                  <li>
+                    {chapter[1] ? (
+                      <a
+                        href={"/learn/" + chapter[1]}
+                        aria-current={location.pathname === "/learn/" + chapter[1] ? "page" : null}
+                      >
+                        {chapter[0]}
+                      </a>
+                    ) : (
+                      <span class="chapter-planned">{chapter[0]}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </nav>
+      </aside>
+    </>
+  );
+}

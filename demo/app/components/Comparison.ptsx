@@ -1,0 +1,262 @@
+import { state, effect, ref } from "publr";
+import type { TutorialSession } from "../walkthrough/session";
+import { tabSelection, type TabSelection } from "../walkthrough/tabs";
+import { CodeLegend, LessonContent } from "./LessonContent.ptsx";
+import { PreviewSurface } from "./PreviewSurface.ptsx";
+import { CodeInspector } from "./CodeInspector.ptsx";
+
+export function Comparison(props: { session: TutorialSession }) {
+  const dialog = ref<HTMLDialogElement>();
+  const scroll = ref<HTMLDivElement>();
+  let rows = state<{ index: number; tabs: TabSelection }[]>([]);
+  let responses = state<string[]>([]);
+  let busy = state(false);
+  let error = state("");
+  let request = new AbortController();
+  effect(() => {
+    if (props.session.comparison) {
+      rows = [{ index: 0, tabs: tabSelection() }];
+      responses = [];
+      error = "";
+      busy = false;
+      dialog.current!.showModal();
+      scroll.current!.scrollTop = 0;
+      document.body.classList.add("walkthrough-open");
+    } else {
+      request?.abort();
+      rows = [];
+      dialog.current?.close();
+      document.body.classList.remove("walkthrough-open");
+    }
+    return () => request?.abort();
+  });
+  function close() {
+    props.session.comparison = false;
+    props.session.returnFocus();
+  }
+  async function advance() {
+    if (rows.at(-1)?.tabs.move(1)) return;
+    if (rows.length === 4) {
+      close();
+      return;
+    }
+    if (rows.length === 2) {
+      request?.abort();
+      request = new AbortController();
+      const pending = request;
+      busy = true;
+      error = "";
+      try {
+        const html = await Promise.all(
+          ["ssr", "csr"].map(async (target) => {
+            const response = await fetch(
+              props.session.presentation.previewURL + "?target=" + target,
+              { signal: pending.signal },
+            );
+            if (!response.ok) throw new Error("Page request failed");
+            return response.text();
+          }),
+        );
+        if (pending.signal.aborted) return;
+        responses = html;
+      } catch {
+        if (!pending.signal.aborted) {
+          busy = false;
+          error = "Could not load the pages. Try again.";
+        }
+        return;
+      }
+    }
+    busy = false;
+    rows = [...rows, { index: rows.length, tabs: tabSelection() }];
+  }
+  function back() {
+    if (rows.at(-1)?.tabs.move(-1)) return;
+    if (rows.length > 1) rows = rows.slice(0, -1);
+    queueMicrotask(() =>
+      scroll.current
+        ?.querySelectorAll(".compare-row")
+        .item(rows.length - 1)
+        ?.scrollIntoView({ block: "start", behavior: "instant" }),
+    );
+  }
+  return (
+    <dialog
+      ref={dialog}
+      id="compare"
+      class="walkthrough compare-dialog"
+      aria-labelledby="compare-title"
+      onClose={close}
+    >
+      <header class="walkthrough-header compare-header">
+        <h2 id="compare-title">
+          {props.session.options.sharedLesson
+            ? "One store. Both views."
+            : "One component. Two journeys."}
+        </h2>
+        <button
+          id="compare-close"
+          class="walkthrough-close"
+          type="button"
+          aria-label="Close comparison"
+          autofocus
+          onClick={close}
+        >
+          ×
+        </button>
+      </header>
+      <div ref={scroll} class="compare-scroll" id="compare-scroll">
+        <div class="compare-columns">
+          <h3>
+            Zig <span>Runs on the server</span>
+          </h3>
+          <h3>
+            JavaScript <span>Runs in the browser</span>
+          </h3>
+        </div>
+        {rows.slice(0, 1).map((row) => (
+          <ComparisonRow
+            key={row.index}
+            index={row.index}
+            tabs={row.tabs}
+            session={props.session}
+            responses={responses}
+          />
+        ))}
+        <div id="compare-journey">
+          {rows.slice(1).map((row) => (
+            <ComparisonRow
+              key={row.index}
+              index={row.index}
+              tabs={row.tabs}
+              session={props.session}
+              responses={responses}
+            />
+          ))}
+        </div>
+      </div>
+      <footer class="walkthrough-footer compare-footer">
+        <button
+          id="compare-back"
+          class="walkthrough-secondary"
+          type="button"
+          disabled={busy || (rows.length <= 1 && !rows[0]?.tabs.canMove(-1))}
+          onClick={back}
+        >
+          ← Previous
+        </button>
+        <p id="compare-status" class="walkthrough-count" role="status">
+          {error || "Step " + rows.length + " of 4"}
+        </p>
+        <button
+          id="compare-next"
+          class="walkthrough-primary"
+          type="button"
+          disabled={busy}
+          onClick={advance}
+        >
+          {busy
+            ? "Loading…"
+            : rows.length === 1
+              ? "Next →"
+              : rows.length === 2
+                ? "Load page →"
+                : rows.length === 4
+                  ? "Done"
+                  : props.session.options.awaitedLesson
+                    ? "Connect / request →"
+                    : props.session.options.sharedLesson
+                      ? "Connect →"
+                      : props.session.options.renderOnly
+                        ? "Render →"
+                        : "Hydrate"}
+        </button>
+      </footer>
+    </dialog>
+  );
+}
+export function ComparisonRow(props: {
+  key?: number;
+  index: number;
+  tabs: TabSelection;
+  session: TutorialSession;
+  responses: string[];
+}) {
+  const row = ref<HTMLElement>();
+  effect(() => {
+    if (props.index > 0) row.current?.scrollIntoView({ block: "start", behavior: "instant" });
+  });
+  return (
+    <section
+      ref={row}
+      class={"compare-row walkthrough-arrive" + (props.index === 0 ? " compare-source-row" : "")}
+      aria-label={
+        [
+          "Your PTSX",
+          "Generated code",
+          "Page loaded",
+          props.session.options.renderOnly ? "Rendered" : "Interactive",
+        ][props.index]
+      }
+    >
+      {(props.index === 0 ? [true] : [true, false]).map((server) => (
+        <ComparisonCell
+          server={server}
+          index={props.index}
+          session={props.session}
+          tabs={props.tabs}
+          html={props.responses[server ? 0 : 1] ?? ""}
+        />
+      ))}
+    </section>
+  );
+}
+export function ComparisonCell(props: {
+  server: boolean;
+  index: number;
+  session: TutorialSession;
+  tabs: TabSelection;
+  html: string;
+}) {
+  let snapshot = state<string | null>(null);
+  return (
+    <div class="compare-cell">
+      <h3 class="compare-step-title">
+        <span class="compare-step-number">{props.index + 1}</span>
+        {props.session.presentation.title(props.index, props.server)}
+      </h3>
+      {props.index === 0 && <CodeLegend />}
+      {props.index < 2 ? (
+        <LessonContent
+          content={props.session.presentation.content(props.index, props.server)}
+          tabs={props.tabs}
+        />
+      ) : (
+        <>
+          <div class="walkthrough-browser">
+            <div class="walkthrough-browser-bar">Page preview</div>
+            <div class={"walkthrough-demo" + (props.index === 3 ? " is-interactive" : "")}>
+              <PreviewSurface
+                html={props.html}
+                options={props.session.options}
+                server={props.server}
+                active={props.index === 3}
+                snapshot={(value) => (snapshot = value)}
+              />
+            </div>
+          </div>
+          <p class="compare-description">
+            {props.index === 2
+              ? props.session.presentation.loadedCopy(props.server)
+              : props.session.presentation.readyCopy(props.server)}
+          </p>
+          <CodeInspector
+            html={snapshot}
+            annotation={props.session.presentation.previewCode("").annotation}
+            caption={props.session.options.portalLesson ? "Live HTML" : undefined}
+          />
+        </>
+      )}
+    </div>
+  );
+}

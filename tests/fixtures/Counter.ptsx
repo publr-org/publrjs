@@ -1,0 +1,19 @@
+import { reactive } from "../../src/publr";
+
+export function Counter({ initial = 0, label = "Count" }: { initial?: number; label?: string }) {
+  const state = reactive({ count: initial });
+
+  return (
+    <button
+      type="button"
+      class="counter"
+      :class={{
+        "counter--active": state.count > 0,
+        "counter--negative": state.count < 0,
+      }}
+      @click={() => state.count++}
+    >
+      {label}: {state.count}
+    </button>
+  );
+}

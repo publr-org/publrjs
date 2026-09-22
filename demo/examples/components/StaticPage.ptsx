@@ -1,0 +1,9 @@
+import { StaticGreeting } from "./StaticGreeting.ptsx";
+
+export function StaticPage() {
+  return (
+    <section>
+      <StaticGreeting name="Ada" />
+    </section>
+  );
+}

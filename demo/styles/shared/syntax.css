@@ -1,0 +1,42 @@
+/* Language colors are independent of the lesson's semantic marker palette. */
+pre code .syntax-token {
+  color: var(--theme-ink, #24292f);
+}
+pre code .syntax-token.comment,
+pre code .syntax-token.prolog,
+pre code .syntax-token.doctype {
+  color: var(--theme-muted, #6a737d);
+}
+pre code .syntax-token.keyword,
+pre code .syntax-token.operator {
+  color: var(--theme-red-ink, #9e264c);
+}
+pre code .syntax-token.string,
+pre code .syntax-token.attr-value,
+pre code .syntax-token.template-string {
+  color: var(--theme-green-ink, #176048);
+}
+pre code .syntax-token.function {
+  color: var(--theme-purple-ink, #6f42a1);
+}
+pre code .syntax-token.number,
+pre code .syntax-token.boolean,
+pre code .syntax-token.constant {
+  color: var(--theme-blue-ink, #005a9e);
+}
+pre code .syntax-token.class-name,
+pre code .syntax-token.builtin {
+  color: var(--theme-amber-ink, #8a4d13);
+}
+pre code .syntax-token.tag {
+  color: var(--theme-blue-ink, #215a91);
+}
+pre code .syntax-token.attr-name {
+  color: var(--theme-amber-ink, #775416);
+}
+pre code .syntax-token.punctuation {
+  color: var(--theme-muted, #57606a);
+}
+pre code mark .syntax-token[class] {
+  color: inherit;
+}

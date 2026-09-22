@@ -1,0 +1,30 @@
+import { state } from "publr";
+let nextTerm = 0;
+export function Term(props: { text: string; definition: string }) {
+  let open = state(false);
+  const id = "term-" + ++nextTerm;
+  function keydown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      open = false;
+      (event.currentTarget as HTMLElement).blur();
+      event.stopPropagation();
+    }
+  }
+  return (
+    <span class={"walkthrough-term" + (open ? " is-open" : "")}>
+      <button
+        class="walkthrough-term-trigger"
+        type="button"
+        aria-describedby={id}
+        onClick={() => (open = !open)}
+        onBlur={() => (open = false)}
+        onKeyDown={keydown}
+      >
+        {props.text}
+      </button>
+      <span class="walkthrough-tooltip" id={id} role="tooltip">
+        {props.definition}
+      </span>
+    </span>
+  );
+}
