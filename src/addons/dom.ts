@@ -10,6 +10,7 @@ import {
   createScope,
   pure,
   disposeScope,
+  getActiveScope,
   onCleanup,
   runInScope,
   resumeScope,
@@ -190,9 +191,18 @@ export function attr(node: Element, name: string, read: () => unknown): void {
     initial = false;
   });
 }
+/** Handlers run in the scope that wired them, so what they reach (a family's
+ * store, a query cache) is the one their element belongs to. */
 export function event(node: EventTarget, name: string, handler: EventListener): void {
-  node.addEventListener(name, handler);
-  onCleanup(() => node.removeEventListener(name, handler));
+  const owner = getActiveScope();
+  const listener = (raw: Event) =>
+    runInScope(owner, () =>
+      typeof handler === "function"
+        ? handler(raw)
+        : (handler as EventListenerObject).handleEvent(raw),
+    );
+  node.addEventListener(name, listener);
+  onCleanup(() => node.removeEventListener(name, listener));
 }
 export function reference(node: Element, ref: (element: Element | null) => void): void {
   ref(node);
@@ -239,7 +249,70 @@ export function component<P>(make: Component<P>, props: P): Node {
     onCleanup(dispose);
     return root;
   }
-  return untrack(() => make(props));
+  // Every component instance owns a scope, so a family root can hang its
+  // instance there and the parts below find it through the chain.
+  return runInScope(createScope(), () => untrack(() => make(props)));
+}
+
+/**
+ * A family root's module-level store, refs, helpers and actions, made once per
+ * root instance. The compiler wraps those declarations in `make`, the root
+ * component calls `create()`, and the forwarded exports the parts import reach
+ * the instance of the root they render under through the owner scope. A part
+ * rendered without a root shares one orphan instance, as module state would.
+ */
+export function family<T extends object>(name: string, make: () => T) {
+  const instances = new WeakMap<Scope, T>();
+  let orphan: T | undefined;
+  const current = (): T => {
+    for (let scope = getActiveScope(); scope; scope = scope.parent ?? null) {
+      const instance = instances.get(scope);
+      if (instance) return instance;
+    }
+    orphan ??= runInScope(null, make);
+    return orphan;
+  };
+  const member = (key: keyof T): object => current()[key] as object;
+  return {
+    name,
+    current,
+    create(): T {
+      const scope = getActiveScope();
+      const instance = make();
+      if (scope) instances.set(scope, instance);
+      return instance;
+    },
+    /** The root component: its instance exists before its props are read, so
+     * the parts a children getter builds already find it. */
+    root<P>(make: Component<P>): Component<P> {
+      return (props) => {
+        this.create();
+        return make(props);
+      };
+    },
+    /** A stand-in for a store or ref: every access reaches the current instance. */
+    field<K extends keyof T>(key: K): T[K] {
+      const target = (() => {}) as unknown as object;
+      return new Proxy(target, {
+        get: (_, property) => Reflect.get(member(key), property),
+        set: (_, property, value) => Reflect.set(member(key), property, value),
+        has: (_, property) => Reflect.has(member(key), property),
+        deleteProperty: (_, property) => Reflect.deleteProperty(member(key), property),
+        ownKeys: () => Reflect.ownKeys(member(key)),
+        getOwnPropertyDescriptor: (_, property) => {
+          const descriptor = Reflect.getOwnPropertyDescriptor(member(key), property);
+          return descriptor && { ...descriptor, configurable: true };
+        },
+        apply: (_, self, args) =>
+          Reflect.apply(member(key) as (...args: unknown[]) => unknown, self, args),
+      }) as T[K];
+    },
+    /** A stand-in for an action: the call reaches the current instance. */
+    action<K extends keyof T>(key: K): T[K] {
+      return ((...args: unknown[]) =>
+        (member(key) as (...args: unknown[]) => unknown)(...args)) as T[K];
+    },
+  };
 }
 export function show<T extends Element>(node: T, read: () => unknown): T {
   render(evaluate(node, read), (value) => setVisible(node, !!value));

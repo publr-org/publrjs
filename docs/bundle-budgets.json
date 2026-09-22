@@ -1,8 +1,8 @@
 {
   "Counter": {
-    "javascript": 16057,
-    "gzip": 5387,
-    "brotli": 4826,
+    "javascript": 16144,
+    "gzip": 5413,
+    "brotli": 4847,
     "html": 250
   },
   "List": {
@@ -12,15 +12,15 @@
     "html": 0
   },
   "Users": {
-    "javascript": 31652,
-    "gzip": 10073,
-    "brotli": 9044,
+    "javascript": 31753,
+    "gzip": 10110,
+    "brotli": 9061,
     "html": 652
   },
   "Pair": {
-    "javascript": 17389,
-    "gzip": 5785,
-    "brotli": 5173,
+    "javascript": 17490,
+    "gzip": 5818,
+    "brotli": 5187,
     "html": 588
   },
   "UsersHTML": {
