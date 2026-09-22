@@ -13,6 +13,7 @@
     ".": "./src/publr.ts",
     "./runtime": "./src/runtime.ts",
     "./dom": "./src/addons/dom.ts",
+    "./jsx": "./src/addons/jsx.ts",
     "./transport": "./src/transport.ts",
     "./query": "./src/addons/query.ts",
     "./router": "./src/addons/router.ts",

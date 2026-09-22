@@ -69,6 +69,7 @@ export default defineConfig({
       "publr/runtime": new URL("./src/runtime.ts", import.meta.url).pathname,
       "publr/transport": new URL("./src/transport.ts", import.meta.url).pathname,
       "publr-dom": new URL("./src/addons/dom.ts", import.meta.url).pathname,
+      "publr-jsx": new URL("./src/addons/jsx.ts", import.meta.url).pathname,
       publr: new URL("./src/publr.ts", import.meta.url).pathname,
     },
   },
@@ -93,6 +94,7 @@ export default defineConfig({
         "publr-focus": "src/addons/focus.ts",
         "publr-position": "src/addons/position.ts",
         "publr-class-merge": "src/addons/class-merge.ts",
+        "publr-jsx": "src/addons/jsx.ts",
       },
       output: {
         format: "es",

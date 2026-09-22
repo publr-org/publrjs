@@ -6,6 +6,7 @@
     "paths": {
       "publr": ["./src/publr.ts"],
       "publr/dom": ["./src/addons/dom.ts"],
+      "publr-jsx": ["./src/addons/jsx.ts"],
       "publr/router": ["./src/addons/router.ts"],
       "publr/html": ["./src/html.ts"]
     },

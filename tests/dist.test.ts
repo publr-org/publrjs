@@ -7,10 +7,15 @@ import * as dom from "../dist/publr-dom.js";
 import * as runtime from "../dist/publr-runtime.js";
 // @ts-expect-error built modules
 import { invalidate } from "../dist/publr-query.js";
+// @ts-expect-error built modules
+import * as jsx from "../dist/publr-jsx.js";
 
-it("ships the compiled DOM target without a legacy JSX entry or generic element API", () => {
-  expect(existsSync("dist/publr-jsx.js")).toBe(false);
+it("ships the compiled DOM target and its authoring face without a generic element API", () => {
+  expect(existsSync("dist/publr-jsx.js")).toBe(true);
   expect(dom.h).toBeUndefined();
+  expect(jsx.h).toBeUndefined();
+  expect(typeof jsx.Dynamic).toBe("function");
+  expect(typeof jsx.mount).toBe("function");
   expect(typeof dom.mount).toBe("function");
   const code = readFileSync("dist/publr-dom.js", "utf8");
   expect(code).not.toContain("WebAssembly");
