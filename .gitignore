@@ -15,3 +15,12 @@ demo/.generated/
 ROUTER-PLAN.md
 docs/tutorial-progress.md
 docs/tutorial-presentation-plan.md
+
+# build output, local data and credentials
+.zig-cache/
+zig-out/
+data/*.db
+.env
+.env.*
+credentials
+*.pem
