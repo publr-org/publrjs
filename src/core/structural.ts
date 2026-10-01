@@ -129,6 +129,25 @@ export const setupIf = (el: Element, attr: string): void => {
   });
 };
 
+// Selects whose selection a person chose; a list never resets those.
+const chosenSelects = new WeakSet<Element>();
+
+// Options a list mounts into a select select as parsed markup would: the first
+// option, unless one is marked `selected` — while nobody has chosen one and no
+// binding owns the value. Without this the select keeps showing whatever option
+// was first before the list arrived.
+const settleSelect = (parent: Element): void => {
+  if (!(parent instanceof HTMLSelectElement) || parent.multiple) return;
+  if (
+    chosenSelects.has(parent) ||
+    parent.hasAttribute("data-p-model") ||
+    parent.hasAttribute("data-p-bind")
+  )
+    return;
+  if ([...parent.options].some((option) => option.defaultSelected)) return;
+  parent.selectedIndex = parent.options.length ? 0 : -1;
+};
+
 export const setupFor = (el: Element, attr: string): void => {
   const tp = tplParts(el);
 
@@ -165,6 +184,10 @@ export const setupFor = (el: Element, attr: string): void => {
   onCleanup(() => {
     for (const [node] of rendered.values()) destroy(node);
   });
+
+  if (parent instanceof HTMLSelectElement && !chosenSelects.has(parent)) {
+    parent.addEventListener("change", () => chosenSelects.add(parent), { once: true });
+  }
 
   effect(() => {
     const items: unknown[] = resolvePath(store[0], rest) || [];
@@ -225,5 +248,6 @@ export const setupFor = (el: Element, attr: string): void => {
       node.remove();
     }
     initial.clear();
+    settleSelect(parent);
   });
 };

@@ -11,9 +11,13 @@ import { matchArm, parseBindings, parseMatch, resolvePath, scan, unquoteLiteral 
 import {
   bindPredicate,
   bindRef,
+  isComposite,
+  isGroup,
   resolveElementValue,
   resolveRef,
   resolveValuePath,
+  specLiterals,
+  specValue,
 } from "./resolve";
 import { writePathOnState } from "./model-paths";
 import { ga, isFn, listen, setIfChanged } from "./util";
@@ -101,7 +105,15 @@ export const wireOn = (el: Element, attr: string): void => {
 //                              removes the attribute)
 //   `$value ~ 'fallback'`      the value itself, falling back when null/empty
 //   `$v` / `not $v` / `$n > 2` plain ref or bare predicate
+//   `($spec) { … }`, `'a' + $v`  nested specs (see `specValue` in resolve.ts)
 const bindValue = (el: Element, spec: string, write: (value: unknown) => void): void => {
+  // Nested specs (a component re-emitting a prop wire) evaluate as a whole.
+  if (isComposite(spec)) {
+    const read = specValue(el, spec);
+    effect(() => write(read()));
+    return;
+  }
+
   // The flat form IS a two-arm match (`pred -> 'a' ~ 'b'` ≡
   // `pred { true: 'a', false: 'b' }`) — one evaluator serves both.
   const armsFor = (m: [string, Array<[string, string]>, ...unknown[]]) =>
@@ -243,8 +255,25 @@ export const wireShow = (el: Element, attr: string): void => {
 //   `$env { a: x, _: y } => {…}`  match — arms swap; `=> { … }` pipes the
 //                                  matched TOKEN into `{$}` template holes
 //   `bg-{$color}`                  bare interpolation — `{$name}` holes only
+//   `($spec)`                      a value spec whose value is the class list
+//                                  (a component's wired `classes` prop): each
+//                                  run removes every other list the spec can
+//                                  produce, so a server-rendered one goes too
 export const wireClass = (el: Element, attr: string): void => {
   for (const group of scan(ga(el, attr) || "", [";"])) {
+    if (isGroup(group.trim())) {
+      const read = specValue(el, group);
+      const universe = (specLiterals(group) ?? []).flatMap(splitClasses);
+      const apply = classListApplier(el);
+      effect(() => {
+        const value = read();
+        const classes = value == null || value === false ? [] : splitClasses(String(value));
+        for (const name of universe) if (!classes.includes(name)) el.classList.remove(name);
+        apply(classes);
+      });
+      continue;
+    }
+
     const [head, arrowRest] = scan(group, ["->"], 1);
 
     if (arrowRest != null) {

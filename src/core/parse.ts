@@ -6,9 +6,10 @@
  * The one wire tokenizer: split `s` on any of `delims` (checked in array
  * order, so longer tokens go first where prefixes overlap: `>=` before `>`)
  * at most `limit` times. Never splits inside quoted literals ('…' or "…") or
- * inside […]/{…} at depth 0, so arbitrary-value classes like
+ * inside […]/{…}/(…) at depth 0, so arbitrary-value classes like
  * `grid-cols-[repeat(2,minmax(0,1fr))]`, match blocks, and quoted payloads
- * containing delimiters travel as single segments. The delimiter check runs
+ * containing delimiters, and parenthesized nested specs, travel as single
+ * segments. The delimiter check runs
  * BEFORE bracket tracking, so `{` / `}` themselves work as delimiters (the
  * match-form parser splits on them).
  */
@@ -40,9 +41,9 @@ export const scan = (s: string, delims: string[], limit = Infinity): string[] =>
 
       if (ch === "'" || ch === '"') {
         quote = ch;
-      } else if (ch === "[" || ch === "{") {
+      } else if (ch === "[" || ch === "{" || ch === "(") {
         depth++;
-      } else if ((ch === "]" || ch === "}") && depth) {
+      } else if ((ch === "]" || ch === "}" || ch === ")") && depth) {
         depth--;
       }
     }

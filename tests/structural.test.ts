@@ -415,3 +415,69 @@ describe("server-rendered structural regions", () => {
     expect($("[data-p-store=menu]")).not.toBe(initial);
   });
 });
+
+describe("nested prop wires", () => {
+  it("compose a component's prop wire into text, attributes, classes and branches of a row", async () => {
+    const state = rt.reactive({
+      rows: [{ name: "a", title: "Alpha", nested: false, tone: "success", description: "" }],
+    });
+    Publr.createLocalStore("list", () => ({ state }));
+    // What a card-like callee renders from `size = row.nested ? "small" : "default"`,
+    // `tone`, `title`, `description` and an icon name concatenated into an href.
+    html(
+      `<div data-p-store="list"><template data-p-for="row of $rows" data-p-key="$row.name"><div class="card gap-3" data-p-class="(($row.nested -> 'small' ~ 'default') { 'default': '0', 'small': '1' }) { '0': gap-3, '1': gap-2 };($row.nested { true: ($row.tone { 'success': '0', 'accent': '1' }), false: '2' }) { '0': bg-success, '1': bg-primary, '2': bg-card }" data-p-bind="href:'#icon-' + $row.name;aria-current:$row.nested { true: 'true' }"><span data-p-text="$row.title"></span><template data-p-template="d" data-p-if="$row.description != ''"><em data-p-text="($row.description)"></em></template></div></template></div>`,
+    );
+    Publr.hydrate(document);
+    await tick();
+    const card = $(".card");
+    expect(card.className).toBe("card gap-3 bg-card");
+    expect(card.getAttribute("href")).toBe("#icon-a");
+    expect(card.hasAttribute("aria-current")).toBe(false);
+    expect($("span").textContent).toBe("Alpha");
+    expect($$("em")).toHaveLength(0);
+
+    state.rows[0].nested = true;
+    state.rows[0].description = "More";
+    await tick();
+    expect(card.className).toBe("card gap-2 bg-success");
+    expect(card.getAttribute("aria-current")).toBe("true");
+    expect($("em").textContent).toBe("More");
+
+    state.rows[0].tone = "accent";
+    await tick();
+    expect(card.className).toBe("card gap-2 bg-primary");
+  });
+
+  it("swaps a wired class list, removing the lists the spec can produce", async () => {
+    const state = rt.reactive({ rows: [{ name: "a", busy: false }] });
+    Publr.createLocalStore("spin", () => ({ state }));
+    html(
+      `<div data-p-store="spin"><template data-p-for="row of $rows" data-p-key="$row.name"><svg class="shrink-0 hidden" data-p-class="($row.busy { true: 'ml-auto animate-spin', false: 'hidden' })"></svg></template></div>`,
+    );
+    Publr.hydrate(document);
+    await tick();
+    const svg = document.querySelector("svg")!;
+    expect(svg.getAttribute("class")).toBe("shrink-0 hidden");
+    state.rows[0].busy = true;
+    await tick();
+    expect(svg.getAttribute("class")).toBe("shrink-0 ml-auto animate-spin");
+    state.rows[0].busy = false;
+    await tick();
+    expect(svg.getAttribute("class")).toBe("shrink-0 hidden");
+  });
+
+  it("selects the first option a list mounts into an untouched select", async () => {
+    const state = rt.reactive({ sources: [] as string[] });
+    Publr.createLocalStore("form", () => ({ state }));
+    html(
+      `<div data-p-store="form"><select><template data-p-for="source of $sources" data-p-key="$source"><option data-p-bind="value:$source" data-p-text="$source"></option></template><option value="">None</option></select></div>`,
+    );
+    Publr.hydrate(document);
+    await tick();
+    const select = $("select") as HTMLSelectElement;
+    expect(select.value).toBe("");
+    state.sources = ["english", "polish"];
+    await tick();
+    expect(select.value).toBe("english");
+  });
+});
