@@ -117,6 +117,26 @@ export const resolveElementValue = (el: Element, reference: string): string | un
   return undefined;
 };
 
+/**
+ * The right side of a predicate, as a reader: a `$path` reads that state value (so
+ * `$chosen == $row.index` follows both), `@name` the nearest authored data value,
+ * anything else the literal itself.
+ */
+const comparedReader = (
+  el: Element,
+  literal: string | undefined,
+  compared?: boolean,
+): (() => string | undefined) => {
+  if (!compared || literal == null)
+    return () => (literal && resolveElementValue(el, literal)) ?? literal;
+  const [store, rest] = resolveRef(literal, el);
+  return () => {
+    if (!store) return undefined;
+    const value = resolveValuePath(store, rest);
+    return value == null ? undefined : String(value);
+  };
+};
+
 export const bindRef = (
   el: Element,
   ref: string,
@@ -242,7 +262,8 @@ export const specValue = (el: Element, raw: string): (() => unknown) => {
     };
   }
 
-  const [ref, negate, op, literal] = parsePredicate(s);
+  const [ref, negate, op, literal, compared] = parsePredicate(s);
+  const right = comparedReader(el, literal, compared);
   let read: () => unknown;
   if (isGroup(ref)) {
     read = specValue(el, ref);
@@ -252,7 +273,7 @@ export const specValue = (el: Element, raw: string): (() => unknown) => {
   }
   return () => {
     const raw = read();
-    const value = op ? evaluatePredicate(raw, op, literal!) : raw;
+    const value = op ? evaluatePredicate(raw, op, right() ?? "") : raw;
     return negate ? !value : value;
   };
 };
@@ -275,23 +296,22 @@ export const bindPredicate = (
     effect(() => apply(project(read())));
     return;
   }
-  const [ref, negate, op, literal] = parsePredicate(spec);
+  const [ref, negate, op, literal, compared] = parsePredicate(spec);
+  const right = comparedReader(el, literal, compared);
 
   const [store, rest] = resolveRef(ref, el);
   if (!store) return;
   if (!store[0][HTML_STORE]) {
     effect(() => {
       const raw = resolveValuePath(store, rest);
-      const compared = (literal && resolveElementValue(el, literal)) ?? literal;
-      const value = op ? evaluatePredicate(raw, op, compared!) : raw;
+      const value = op ? evaluatePredicate(raw, op, right() ?? "") : raw;
       apply(project(negate ? !value : value));
     });
     return;
   }
   render(() => {
     const raw = resolveValuePath(store, rest);
-    const compared = (literal && resolveElementValue(el, literal)) ?? literal;
-    const value = op ? evaluatePredicate(raw, op, compared!) : raw;
+    const value = op ? evaluatePredicate(raw, op, right() ?? "") : raw;
     return project(negate ? !value : value);
   }, apply);
 };

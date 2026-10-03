@@ -263,6 +263,41 @@ describe("data-p-show", () => {
   });
 });
 
+describe("concatenations that start and end with a literal", () => {
+  it("bind as a concatenation, not as one quoted string", async () => {
+    const state = await mount(
+      `<input id="name" data-p-bind="name:'currency[' + $index + '].code'">`,
+      {
+        index: 3,
+      },
+    );
+
+    expect($("#name").getAttribute("name")).toBe("currency[3].code");
+    state.index = 4;
+    await tick();
+    expect($("#name").getAttribute("name")).toBe("currency[4].code");
+  });
+});
+
+describe("predicates over two paths", () => {
+  it("compares one state value with another, following both", async () => {
+    const state = await mount(
+      `<div id="row" data-p-bind="aria-checked:$chosen == $index"></div>
+       <div id="quoted" data-p-show="$chosen == '$index'"></div>`,
+      { chosen: 1, index: 1 },
+    );
+
+    expect($("#row").getAttribute("aria-checked")).toBe("true");
+    expect($("#quoted").classList.contains("hidden")).toBe(true);
+    state.chosen = 2;
+    await tick();
+    expect($("#row").getAttribute("aria-checked")).toBe("false");
+    state.index = 2;
+    await tick();
+    expect($("#row").getAttribute("aria-checked")).toBe("true");
+  });
+});
+
 describe("data-p-class", () => {
   it("toggles a whitespace-joined class list with the ref", async () => {
     const entry = await mount(`<div id="c" data-p-class="$open -> block shadow"></div>`, {
