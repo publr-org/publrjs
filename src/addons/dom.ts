@@ -1,3 +1,4 @@
+import { url, urlAttributes } from "../core/base";
 import { setDirectiveValue } from "../core/directive-value";
 import { compiledFactory, structuralRootEnd } from "../core/component-metadata";
 import { className } from "../core/class-value";
@@ -127,6 +128,8 @@ function writeAttribute(node: Element, name: string, value: unknown): void {
   } else if (name.startsWith("aria-") && typeof value === "boolean")
     node.setAttribute(name, String(value));
   else if (value == null || value === false) node.removeAttribute(name);
+  else if (urlAttributes.has(name) && typeof value === "string")
+    node.setAttribute(name, url(value));
   else node.setAttribute(name, value === true ? "" : String(value));
 }
 // The element whose attribute is being evaluated, so `dataset()` can read that

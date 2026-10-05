@@ -1,3 +1,4 @@
+import { url as underBase } from "./core/base";
 import { operationSignal } from "./core/operation-context";
 // Generated native stubs own transport details. Authority comes from the request.
 import { httpPolicy } from "./core/http-policy";
@@ -63,7 +64,8 @@ export async function operation<T>(endpoint: string, args: unknown[]): Promise<O
       }
     }
   };
-  const response = await fetch(endpoint, {
+  // A root endpoint goes under the page's base path, as the server's own addresses do.
+  const response = await fetch(underBase(endpoint), {
     signal: operationSignal(),
     method: "POST",
     credentials: "same-origin",
@@ -116,7 +118,7 @@ export function httpOperation<T>(
 ): () => Promise<OperationResult<T>> {
   return async () => {
     const requestedAt = Date.now();
-    const response = await fetch(url, {
+    const response = await fetch(typeof url === "string" ? underBase(url) : url, {
       signal: operationSignal(),
       method: "GET",
       headers: options.headers,

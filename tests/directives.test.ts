@@ -188,13 +188,25 @@ describe("data-p-show", () => {
     const entry = await mount(`<div id="s" hidden data-p-show="$visible"></div>`, {
       visible: false,
     });
-    expect($("#s").hasAttribute("hidden")).toBe(false);
+    expect($("#s").hasAttribute("hidden")).toBe(true);
     expect($("#s").classList.contains("hidden")).toBe(true);
 
     entry.visible = true;
     await tick();
     expect($("#s").hasAttribute("hidden")).toBe(false);
     expect($("#s").classList.contains("hidden")).toBe(false);
+  });
+
+  it("hides an element that sets its own display with the attribute", async () => {
+    // A Button is `inline-flex`; the `hidden` class alone loses to it by CSS order.
+    const entry = await mount(`<button id="s" class="inline-flex" data-p-show="$failed"></button>`, {
+      failed: false,
+    });
+    expect($("#s").hasAttribute("hidden")).toBe(true);
+
+    entry.failed = true;
+    await tick();
+    expect($("#s").hasAttribute("hidden")).toBe(false);
   });
 
   it("supports not negation", async () => {

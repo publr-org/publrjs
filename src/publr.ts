@@ -4,6 +4,7 @@
 // scripts/vendor-publr.sh. DO NOT edit vendored copies — edit here + rebuild.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { path, url } from "./core/base";
 import { state } from "./intrinsics";
 import { createStoreContainer } from "./core/store";
 import { RAW, tagStore } from "./core/symbols";
@@ -100,6 +101,9 @@ export interface PublrRuntime {
   subscribe(fn: SubscribeFn): () => void;
   subscribe(selector: string, fn: SubscribeFn): () => void;
 
+  url: typeof url;
+  path: typeof path;
+
   _internals: PublrInternals;
 
   // ── Installed by the publr-router addon (absent until it loads) ──────────
@@ -132,6 +136,12 @@ export const Publr: PublrRuntime = {
    * teardown synchronous + deterministic.
    */
   destroy,
+
+  /** A root path under the page's base path (`/environments/dev`), for `fetch` and the
+   * addresses a script builds; as it is at the root. */
+  url,
+  /** A path the browser shows, without the page's base: what the site calls it. */
+  path,
 
   randomId() {
     return globalThis.crypto?.randomUUID?.() ?? `id-${Math.random().toString(36).slice(2, 18)}`;

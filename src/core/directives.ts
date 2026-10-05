@@ -1,3 +1,4 @@
+import { url, urlAttributes } from "./base";
 import { setDirectiveValue } from "./directive-value";
 import { setFocusScope, ownFocusScope } from "./focus";
 import { replaceHtml } from "./lifecycle";
@@ -236,16 +237,22 @@ const bindClassArms = (el: Element, disc: string, arms: Array<[string, string]>)
   });
 };
 
-// data-p-show is exactly a class binding: `hidden` is the falsy arm.
+// data-p-show: the falsy arm hides. It toggles the `hidden` class, as a class binding
+// would, and the native attribute with it: an element that sets its own display
+// (`flex`, a Button's `inline-flex`) beats the `hidden` class by CSS order, never the
+// attribute, which the stylesheet hides with `!important`.
 export const wireShow = (el: Element, attr: string): void => {
   const spec = ga(el, attr);
 
   if (spec) {
-    bindClassArms(el, spec, [["false", "hidden"]]);
-    // SSR may use the native attribute to prevent a flash before hydration.
-    // Once the reactive class binding is active it owns visibility; retaining
-    // the attribute would keep the element hidden after the class is removed.
-    el.removeAttribute("hidden");
+    const arms: Array<[string, string]> = [["false", "hidden"]];
+
+    bindPredicate(el, spec, (value) => {
+      const hidden = matchArm(arms, value) === "hidden";
+
+      el.classList.toggle("hidden", hidden);
+      el.toggleAttribute("hidden", hidden);
+    });
   }
 };
 
@@ -359,6 +366,11 @@ const setBoundAttribute = (el: Element, attr: string, value: unknown): void => {
 
   if (value == null || value === false) {
     el.removeAttribute(attr);
+    return;
+  }
+
+  if (urlAttributes.has(attr) && typeof value === "string") {
+    el.setAttribute(attr, url(value));
     return;
   }
 
