@@ -64,6 +64,7 @@ export default defineConfig({
       "publr/focus": new URL("./src/addons/focus.ts", import.meta.url).pathname,
       "publr/position": new URL("./src/addons/position.ts", import.meta.url).pathname,
       "publr/query": new URL("./src/addons/query.ts", import.meta.url).pathname,
+      "publr/operations": new URL("./src/addons/operations.ts", import.meta.url).pathname,
       "publr/router": new URL("./src/addons/router.ts", import.meta.url).pathname,
       "publr/class-merge": new URL("./src/addons/class-merge.ts", import.meta.url).pathname,
       "publr/runtime": new URL("./src/runtime.ts", import.meta.url).pathname,
@@ -86,6 +87,7 @@ export default defineConfig({
       input: {
         publr: "src/publr.ts",
         "publr-query": "src/addons/query.ts",
+        "publr-operations": "src/addons/operations.ts",
         "publr-router": "src/addons/router.ts",
         "publr-dom": "src/addons/dom.ts",
         "publr-html": "src/html.ts",

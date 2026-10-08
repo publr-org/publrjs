@@ -16,6 +16,7 @@
     "./jsx": "./src/addons/jsx.ts",
     "./transport": "./src/transport.ts",
     "./query": "./src/addons/query.ts",
+    "./operations": "./src/addons/operations.ts",
     "./router": "./src/addons/router.ts",
     "./class-merge": "./src/addons/class-merge.ts",
     "./focus": "./src/addons/focus.ts",
