@@ -32,7 +32,12 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(arena);
     if (args.len < 2) return error.MissingCommand;
     var out: std.Io.Writer.Allocating = .init(arena);
-    var ctx = Backend.Context{ .arena = arena, .io = init.io, .now_ms = @intCast(@divTrunc(std.Io.Clock.real.now(init.io).nanoseconds, std.time.ns_per_ms)), .initial = std.mem.eql(u8, args[1], "render") };
+    var ctx = Backend.Context{
+        .arena = arena,
+        .io = init.io,
+        .now_ms = @intCast(@divTrunc(std.Io.Clock.real.now(init.io).nanoseconds, std.time.ns_per_ms)),
+        .initial = std.mem.eql(u8, args[1], "render"),
+    };
     if (std.mem.eql(u8, args[1], "hello")) {
         try Hello.render(&out.writer, arena, &ctx, try rt.object(arena, &.{}, &.{}), "hello-button");
     } else if (std.mem.eql(u8, args[1], "shared-state")) {
@@ -82,10 +87,14 @@ pub fn main(init: std.process.Init) !void {
     } else if (std.mem.eql(u8, args[1], "counter")) {
         try SimpleCounter.render(&out.writer, arena, &ctx, try rt.object(arena, &.{}, &.{}), "simple-counter");
     } else if (std.mem.eql(u8, args[1], "navigation") and args.len == 3) {
-        try NavigationPage.render(&out.writer, arena, &ctx, try rt.object(arena, &.{"page"}, &.{.{ .string = args[2] }}), "navigation-page");
+        try NavigationPage.render(&out.writer, arena, &ctx, try rt.object(arena, &.{"page"}, &.{.{
+            .string = args[2],
+        }}), "navigation-page");
     } else if (ctx.initial) {
         const search = if (args.len > 2) args[2] else "";
-        try Desk.render(&out.writer, arena, &ctx, try rt.object(arena, &.{"search"}, &.{.{ .string = search }}), "team-desk");
+        try Desk.render(&out.writer, arena, &ctx, try rt.object(arena, &.{"search"}, &.{.{
+            .string = search,
+        }}), "team-desk");
     } else if (std.mem.eql(u8, args[1], "types")) {
         if (!(try Desk.writeTypes(&out.writer, "../../backend/team.zig"))) return error.NoTypes;
     } else if (std.mem.eql(u8, args[1], "call") and (args.len == 4 or args.len == 5)) {

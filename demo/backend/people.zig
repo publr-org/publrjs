@@ -1,10 +1,22 @@
 const std = @import("std");
 const Context = @import("team.zig").Context;
-pub const Person = struct { id: f64, name: []const u8 };
+pub const Person = struct {
+    id: f64,
+    name: []const u8,
+};
 const people = [_]Person{
-    .{ .id = 1, .name = "Ada Chen" },
-    .{ .id = 2, .name = "Elena Rossi" },
-    .{ .id = 3, .name = "Jules Martin" },
+    .{
+        .id = 1,
+        .name = "Ada Chen",
+    },
+    .{
+        .id = 2,
+        .name = "Elena Rossi",
+    },
+    .{
+        .id = 3,
+        .name = "Jules Martin",
+    },
 };
 pub fn findPeople(ctx: *Context, search: []const u8) ![]const Person {
     if (!ctx.authorized) return error.Unauthorized;

@@ -9,7 +9,10 @@ pub fn readPeople(ctx: *Context, search: []const u8) ![]const people.Person {
     for (ctx.query_additions) |person| {
         const name = try std.ascii.allocLowerString(ctx.arena, person.name);
         if (std.mem.indexOf(u8, name, needle) != null)
-            try result.append(ctx.arena, .{ .id = person.id, .name = person.name });
+            try result.append(ctx.arena, .{
+                .id = person.id,
+                .name = person.name,
+            });
     }
     try result.appendSlice(ctx.arena, try people.findPeople(ctx, search));
     return result.items;
