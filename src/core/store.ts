@@ -137,7 +137,7 @@ export const wireWatchBlock = (state: any, watchSpec: WatchSpec, el: Element | n
 /** Repackage named store parts into the internal StoreRef tuple. */
 export const toRef = (parts: StoreParts): StoreRef =>
   // eslint-disable-next-line typescript/unbound-method
-  [parts.state, parts.actions, parts.watch, parts.init, parts.refs];
+  [parts.state, parts.actions, parts.watch, parts.init, parts.refs, parts.expressions];
 
 export const resolveActions = <S extends State, A extends Actions>(
   actions: A | ((context: { state: S }) => A) | undefined,
@@ -151,6 +151,7 @@ export const resolveDefinition = <
   D extends Omit<StoreDefinition<S, A>, "init">,
 >(
   factory: StoreDefinitionFactory<S, A, D>,
+  root?: Element,
 ): [definition: D, target: S, bind: (state: S) => void] => {
   let current = {} as S;
   const state = new Proxy(Object.create(null), {
@@ -165,7 +166,8 @@ export const resolveDefinition = <
       return key in current;
     },
   }) as S;
-  const [definition, start] = prepareStore(() => factory({ state }));
+  const above = (name: string): State | undefined => (root ? stateAbove(root, name) : undefined);
+  const [definition, start] = prepareStore(() => factory({ state, above }));
   const target = (definition.state ?? {}) as S;
 
   current = target;
@@ -178,6 +180,23 @@ export const resolveDefinition = <
       start();
     },
   ];
+};
+
+/** The state of the nearest island named `name` around `root` (portals followed back to
+ * where they were authored), else the container's shared store of that name. */
+const stateAbove = (root: Element, name: string): State | undefined => {
+  let node: Element | null = root.parentElement;
+
+  while (node?.getAttribute) {
+    const store = (node as Element & { _ps?: StoreRef | null })._ps;
+
+    if (store && node.getAttribute(STORE_ATTR) === name) return store[0];
+
+    const back: ParentNode | null | undefined = (node as Element & { _pp?: [ParentNode] })._pp?.[0];
+    node = back instanceof Element ? back : node.parentElement;
+  }
+
+  return containerFor(root).shared.get(name)?.[0];
 };
 
 /** Flatten state and actions behind one public store facade. */

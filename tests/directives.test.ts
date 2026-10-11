@@ -199,9 +199,12 @@ describe("data-p-show", () => {
 
   it("hides an element that sets its own display with the attribute", async () => {
     // A Button is `inline-flex`; the `hidden` class alone loses to it by CSS order.
-    const entry = await mount(`<button id="s" class="inline-flex" data-p-show="$failed"></button>`, {
-      failed: false,
-    });
+    const entry = await mount(
+      `<button id="s" class="inline-flex" data-p-show="$failed"></button>`,
+      {
+        failed: false,
+      },
+    );
     expect($("#s").hasAttribute("hidden")).toBe(true);
 
     entry.failed = true;
@@ -272,41 +275,6 @@ describe("data-p-show", () => {
     await tick();
     expect($("#trigger").getAttribute("aria-expanded")).toBe("false");
     expect($("#option").getAttribute("aria-selected")).toBe("false");
-  });
-});
-
-describe("concatenations that start and end with a literal", () => {
-  it("bind as a concatenation, not as one quoted string", async () => {
-    const state = await mount(
-      `<input id="name" data-p-bind="name:'currency[' + $index + '].code'">`,
-      {
-        index: 3,
-      },
-    );
-
-    expect($("#name").getAttribute("name")).toBe("currency[3].code");
-    state.index = 4;
-    await tick();
-    expect($("#name").getAttribute("name")).toBe("currency[4].code");
-  });
-});
-
-describe("predicates over two paths", () => {
-  it("compares one state value with another, following both", async () => {
-    const state = await mount(
-      `<div id="row" data-p-bind="aria-checked:$chosen == $index"></div>
-       <div id="quoted" data-p-show="$chosen == '$index'"></div>`,
-      { chosen: 1, index: 1 },
-    );
-
-    expect($("#row").getAttribute("aria-checked")).toBe("true");
-    expect($("#quoted").classList.contains("hidden")).toBe(true);
-    state.chosen = 2;
-    await tick();
-    expect($("#row").getAttribute("aria-checked")).toBe("false");
-    state.index = 2;
-    await tick();
-    expect($("#row").getAttribute("aria-checked")).toBe("true");
   });
 });
 

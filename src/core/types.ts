@@ -1,3 +1,4 @@
+import type { Expressions } from "./slots";
 // Shared types for the PublrJS runtime. Types only — no runtime code, so any
 // module (core or addon) may import from here without affecting chunking.
 //
@@ -100,6 +101,7 @@ export type StoreRef = [
   watch?: WatchSpec,
   init?: InitFn,
   refs?: Refs,
+  expressions?: Expressions,
 ];
 
 /** Named parts used to build the runtime's internal store tuple. */
@@ -109,10 +111,14 @@ export interface StoreParts {
   watch?: WatchSpec;
   init?: InitFn;
   refs?: Refs;
+  expressions?: Expressions;
 }
 
 export interface StoreContext<S extends State = State> {
   state: S;
+  /** The state of the nearest island of the store `name` around this one: a family's
+   * part that keeps a store of its own reads its family's through it. */
+  above?: (name: string) => State | undefined;
 }
 
 export type ActionsFactory<S extends State = State, A extends Actions = Actions> = (
@@ -134,6 +140,8 @@ export interface LocalStoreDefinition<
 > extends Omit<StoreDefinition<S, A>, "init"> {
   actions?: A | ActionsFactory<S, A>;
   init?: InitFn;
+  /** The module's compiled expressions, run in this instance's scope (`slots.ts`). */
+  expressions?: Expressions;
 }
 
 export type StoreDefinitionFactory<

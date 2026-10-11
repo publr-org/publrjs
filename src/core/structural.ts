@@ -10,6 +10,7 @@ import { reactive } from "./reactive";
 import { createScope, disposeScope, effect, onCleanup, runInScope } from "./reactivity";
 import { resolvePath, stripStatePrefix } from "./parse";
 import { bindPredicate, resolveRef } from "./resolve";
+import { isSlot, slotValue } from "./slots";
 import { STORE_ATTR } from "./store";
 import { hydrate, destroy } from "./lifecycle";
 import { ga } from "./util";
@@ -19,19 +20,27 @@ import type { PublrElement, Scope } from "./types";
 type Rendered = [PublrElement, Scope];
 
 const prototypes = new WeakMap<Element, Map<string, HTMLTemplateElement>>();
+// Every prototype a page registered, by id: a page writes a prototype that is all fixed
+// text once, and each later anchor of that template finds it here.
+const pagePrototypes = new WeakMap<Document, Map<string, HTMLTemplateElement>>();
 
 // The template that carries an anchor's content and directive: itself when it has
-// content, else the one registered under the same id by an enclosing prototype. A
-// server-rendered row repeats neither the markup nor the spec of its anchors.
+// content, else the one registered under the same id by an enclosing prototype, else by
+// the page. A server-rendered row repeats neither the markup nor the spec of its anchors.
 const sourceFor = (tpl: HTMLTemplateElement): HTMLTemplateElement | null => {
   const owner = tpl.parentElement;
   if (tpl.content?.firstElementChild && owner) {
     const registry = prototypes.get(owner) ?? new Map<string, HTMLTemplateElement>();
+    const page = pagePrototypes.get(tpl.ownerDocument) ?? new Map<string, HTMLTemplateElement>();
+    pagePrototypes.set(tpl.ownerDocument, page);
     const pending = [tpl];
     while (pending.length) {
       const template = pending.pop()!;
       const id = template.getAttribute("data-p-template");
-      if (id && template.content.firstElementChild) registry.set(id, template);
+      if (id && template.content.firstElementChild) {
+        registry.set(id, template);
+        if (!page.has(id)) page.set(id, template);
+      }
       pending.push(
         ...template.content.querySelectorAll<HTMLTemplateElement>("template[data-p-template]"),
       );
@@ -48,7 +57,7 @@ const sourceFor = (tpl: HTMLTemplateElement): HTMLTemplateElement | null => {
     const found = id && prototypes.get(ancestor)?.get(id);
     if (found) return found;
   }
-  return null;
+  return (id && pagePrototypes.get(tpl.ownerDocument)?.get(id)) || null;
 };
 
 // An anchor's directive value: its own when set, else its source template's.
@@ -165,10 +174,15 @@ export const setupFor = (el: Element, attr: string): void => {
 
   const alias = spec.slice(0, ofIndex).trim();
   const keyAttr = specOf(tpl, source, "data-p-key") || "";
-  const [store, rest] = resolveRef(spec.slice(ofIndex + 4).trim(), tpl);
+  const subject = spec.slice(ofIndex + 4).trim();
+  let read: () => unknown;
 
-  if (!store) {
-    return;
+  if (isSlot(subject)) {
+    read = slotValue(tpl, subject);
+  } else {
+    const [store, rest] = resolveRef(subject, tpl);
+    if (!store) return;
+    read = () => resolvePath(store[0], rest);
   }
 
   const rendered = new Map<unknown, Rendered>();
@@ -190,7 +204,7 @@ export const setupFor = (el: Element, attr: string): void => {
   }
 
   effect(() => {
-    const items: unknown[] = resolvePath(store[0], rest) || [];
+    const items = (read() as unknown[] | null | undefined) || [];
     const liveKeys = new Set<unknown>();
     let previousNode: Element = tpl;
 

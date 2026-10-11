@@ -5,6 +5,7 @@ import {
   effect,
   onCleanup,
   Pending,
+  runInScope,
   scheduleRender,
   untrack,
 } from "./reactivity";
@@ -63,7 +64,11 @@ export function flushRegion(region: Region): void {
     else if (failed) throw failure;
     return;
   }
-  for (const [job, value] of staged) if (job.live) untrack(() => job.commit(value));
+  // A commit builds nodes (an insert that turns into markup) in the scope that
+  // made the binding, so what they own and reach (a family's instance) is the
+  // binding's, not whatever runs the flush.
+  for (const [job, value] of staged)
+    if (job.live) runInScope(job.owner, () => untrack(() => job.commit(value)));
   region.status?.(undefined, false, false);
 }
 function schedule(region: Region): void {

@@ -51,6 +51,13 @@ export const Slot: Make = (props) => {
     throw new TypeError("publr-jsx: Slot requires one Element child");
   const merged: Props = { ...props, as: child };
   delete merged.children;
+  // The child keeps its own classes: the Slot's are added to them, never put in their
+  // place, and an empty one (a trigger's default `classes`) leaves them alone.
+  if (Object.hasOwn(merged, "class")) {
+    const slotClass = merged.class;
+    if (slotClass === undefined || slotClass === null || slotClass === "") delete merged.class;
+    else merged.class = [child.getAttribute("class") ?? "", slotClass];
+  }
   return Dynamic(merged);
 };
 
@@ -74,13 +81,16 @@ function bind(node: Element, props: Props, forwarded: Props | null): void {
     else if (key === "style") dom.styles(node, () => props.style);
     else dom.attr(node, key, () => props[key]);
   }
-  // Read once: a children getter builds its nodes on every read, and a region
-  // re-reads its inserts on every flush, so a thunk over the getter never settles.
+  // Nodes are read once: a children getter builds its nodes on every read, and a
+  // region re-reads its inserts on every flush, so a thunk over the getter never
+  // settles. Text and numbers build nothing, so they stay a live read and show as
+  // they change.
   if (Object.hasOwn(props, "children")) {
     const children = props.children;
+    const text = typeof children === "string" || typeof children === "number";
     dom.append(
       node,
-      dom.insert(() => children),
+      dom.insert(() => (text ? props.children : children)),
     );
   }
 }

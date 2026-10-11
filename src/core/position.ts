@@ -1,4 +1,5 @@
 import { position, type Placement, type PositionOptions } from "../addons/position";
+import { namesOf } from "../addons/class-merge";
 import { onCleanup, postEffect } from "./reactivity";
 import type { PublrElement } from "./types";
 import { directiveValue } from "./directive-value";
@@ -32,7 +33,8 @@ export const wirePosition = (element: Element, attr: string): void => {
   let enabled = true;
   let frame = 0;
 
-  const isVisible = (): boolean => !floating.hidden && !floating.classList.contains("hidden");
+  const isVisible = (): boolean =>
+    !floating.hidden && !namesOf("hidden").every((name) => floating.classList.contains(name));
 
   const dismiss = (reason: "pointer" | "escape"): void => {
     floating.dispatchEvent(new CustomEvent("dismiss", { cancelable: true, detail: { reason } }));

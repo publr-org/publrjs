@@ -1,3 +1,4 @@
+import { t, tn, tx } from "./core/translate";
 // ─────────────────────────────────────────────────────────────────────────────
 // PublrJS core runtime entry — SOURCE OF TRUTH: publr-js/src/ (TypeScript).
 // Built to dist/publr.js by Vite, then vendored into consumers by
@@ -21,6 +22,7 @@ import {
 import { proxyCache, reactive, unwrap } from "./core/reactive";
 import { subscribe } from "./core/subscribe";
 import { createLocalStore, createdStores, createStore } from "./core/store";
+import { expressions } from "./core/slots";
 import { destroy, hydrate, start } from "./core/lifecycle";
 import { portal, unportal } from "./core/portal";
 import { ref } from "./core/ref";
@@ -88,6 +90,9 @@ export interface PublrRuntime {
     factory: StoreDefinitionFactory<S, A, LocalStoreDefinition<S, A>>,
   ): void;
 
+  /** Register the compiled expressions of a module without a store of its own. */
+  expressions: typeof expressions;
+
   /** Live access to shared stores by name. */
   readonly stores: Record<string, CreatedStore>;
 
@@ -103,6 +108,12 @@ export interface PublrRuntime {
 
   url: typeof url;
   path: typeof path;
+
+  /** The message in the reader's language: `t("Save")`, `tx("verb", "Post")`,
+   * `tn("{count} file", "{count} files", n)`, each with optional `{ name: value }`. */
+  t: typeof t;
+  tx: typeof tx;
+  tn: typeof tn;
 
   _internals: PublrInternals;
 
@@ -143,6 +154,10 @@ export const Publr: PublrRuntime = {
   /** A path the browser shows, without the page's base: what the site calls it. */
   path,
 
+  t,
+  tx,
+  tn,
+
   randomId() {
     return globalThis.crypto?.randomUUID?.() ?? `id-${Math.random().toString(36).slice(2, 18)}`;
   },
@@ -152,6 +167,8 @@ export const Publr: PublrRuntime = {
   createStore,
 
   createLocalStore,
+
+  expressions,
 
   get stores() {
     const out: Record<string, CreatedStore> = {};

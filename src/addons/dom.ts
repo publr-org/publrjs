@@ -1,8 +1,9 @@
+import { evaluateAt, evaluatingElement } from "../core/evaluating";
 import { url, urlAttributes } from "../core/base";
 import { setDirectiveValue } from "../core/directive-value";
 import { compiledFactory, structuralRootEnd } from "../core/component-metadata";
 import { className } from "../core/class-value";
-import { mergeClasses } from "./class-merge";
+import { mergeClasses, namesOf } from "./class-merge";
 import { unwrap } from "../core/reactive";
 import { containerFor } from "../core/container";
 import { withSeed, readSeed, type Seed } from "../core/transfer";
@@ -132,25 +133,16 @@ function writeAttribute(node: Element, name: string, value: unknown): void {
     node.setAttribute(name, url(value));
   else node.setAttribute(name, value === true ? "" : String(value));
 }
-// The element whose attribute is being evaluated, so `dataset()` can read that
-// element's own `data-<name>`, walking up the way the wire does.
-let evaluating: Element | null = null;
 const evaluate =
   <T>(node: Element, read: () => T) =>
-  (): T => {
-    const previous = evaluating;
-    evaluating = node;
-    try {
-      return read();
-    } finally {
-      evaluating = previous;
-    }
-  };
+  (): T =>
+    evaluateAt(node, read);
 /** `Publr.dataset(name)` inside an attribute expression: the nearest `data-<name>`. */
 export function dataset(name: string): string | undefined {
   // A first render evaluates an element before its parent adopts it, so the
   // ancestor that carries the attribute is not reachable yet; the binding
   // re-reads once the tree is placed.
+  const evaluating = evaluatingElement();
   if (evaluating && !evaluating.parentNode && !placed.has(evaluating)) {
     attached.read();
     placing.add(evaluating);
@@ -177,7 +169,7 @@ const placed = new WeakSet<Element>();
 const visibility = new WeakMap<Element, boolean>();
 function setVisible(node: Element, shown: boolean): void {
   visibility.set(node, shown);
-  node.classList.toggle("hidden", !shown);
+  for (const name of namesOf("hidden")) node.classList.toggle(name, !shown);
 }
 export function attr(node: Element, name: string, read: () => unknown): void {
   if (name === "hidden") {
@@ -195,8 +187,14 @@ export function attr(node: Element, name: string, read: () => unknown): void {
   });
 }
 /** Handlers run in the scope that wired them, so what they reach (a family's
- * store, a query cache) is the one their element belongs to. */
-export function event(node: EventTarget, name: string, handler: EventListener): void {
+ * store, a query cache) is the one their element belongs to. An absent handler
+ * (an optional prop passed through) wires nothing. */
+export function event(
+  node: EventTarget,
+  name: string,
+  handler: EventListener | null | undefined,
+): void {
+  if (handler == null) return;
   const owner = getActiveScope();
   const listener = (raw: Event) =>
     runInScope(owner, () =>
@@ -220,7 +218,8 @@ export function classes(node: Element, read: () => unknown): void {
     (value) => {
       attribute(node, "class", value);
       const shown = visibility.get(node);
-      if (shown !== undefined) node.classList.toggle("hidden", !shown);
+      if (shown !== undefined)
+        for (const name of namesOf("hidden")) node.classList.toggle(name, !shown);
     },
   );
 }
@@ -642,33 +641,35 @@ export function Loading(props: {
   let fallbackState: unknown = Symbol();
   let fallbackPending = false;
   const staging = doc().createDocumentFragment();
-  region.status = (error, pending, failed) => {
-    if (pending || failed) {
-      if (!committed) {
-        const next = pending ? undefined : error;
-        if (!fallback || pending !== fallbackPending || !Object.is(next, fallbackState)) {
-          fallbackPending = pending;
-          retire(fallback);
-          fallbackState = next;
-          fallback = inRegion(undefined, () =>
-            build(() => {
-              if (failed && !pending) {
-                if (props.error) return props.error(error);
-                throw error;
-              }
-              return fallbackContent();
-            }, target),
-          );
+  const owner = getActiveScope();
+  region.status = (error, pending, failed) =>
+    runInScope(owner, () => {
+      if (pending || failed) {
+        if (!committed) {
+          const next = pending ? undefined : error;
+          if (!fallback || pending !== fallbackPending || !Object.is(next, fallbackState)) {
+            fallbackPending = pending;
+            retire(fallback);
+            fallbackState = next;
+            fallback = inRegion(undefined, () =>
+              build(() => {
+                if (failed && !pending) {
+                  if (props.error) return props.error(error);
+                  throw error;
+                }
+                return fallbackContent();
+              }, target),
+            );
+          }
         }
+        return;
       }
-      return;
-    }
-    retire(fallback);
-    fallback = undefined;
-    if (staging.childNodes.length) target.end.parentNode!.insertBefore(staging, target.end);
-    if (content) content.nodes = between(target);
-    committed = true;
-  };
+      retire(fallback);
+      fallback = undefined;
+      if (staging.childNodes.length) target.end.parentNode!.insertBefore(staging, target.end);
+      if (content) content.nodes = between(target);
+      committed = true;
+    });
   content = inRegion(region, () => build(children, target, target.adopted));
   if (!target.adopted) for (const node of content.nodes) staging.appendChild(node);
   region.building = false;

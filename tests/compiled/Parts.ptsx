@@ -1,0 +1,50 @@
+// A family module with private values, a root and two more components that
+// read the store and the private helpers. Every part reaches the instance of
+// the root it renders under, in a list row too, never a second one.
+import { Publr } from "publr";
+export const state = Publr.reactive({
+  items: [{ id: 1 }],
+  picks: 0,
+});
+const prefix = "#";
+let added = 1;
+function label(id: number) {
+  return `${prefix}${id}`;
+}
+export const pick = () => {
+  state.picks++;
+};
+export const add = () => {
+  added++;
+  state.items = [...state.items, { id: added }];
+};
+export function Parts({ name }: { name: string }) {
+  return (
+    <section data-name={name}>
+      <button class="add" onClick={() => add()}>add</button>
+      <ul>
+        {state.items.map((item) => (
+          <li key={item.id}>
+            <Item id={item.id} />
+          </li>
+        ))}
+      </ul>
+      <Summary />
+    </section>
+  );
+}
+export function Item({ id }: { id: number }) {
+  return (
+    <button class="item" onClick={() => pick()}>
+      {label(id)}:{state.picks}
+    </button>
+  );
+}
+export function Summary() {
+  return (
+    <p>
+      {prefix}
+      {state.picks}/{added}
+    </p>
+  );
+}

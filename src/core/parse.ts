@@ -99,15 +99,8 @@ export const unquoteLiteral = (s: string): string | null => {
 // needs the surrounding spaces to stay a word (dotted paths have none).
 const OPS = ["==", "!=", ">=", "<=", ">", "<", " contains "];
 
-/** A parsed predicate: [ref, negate, op?, literal?, compared?]. `compared` marks an
- * unquoted `$path` on the right: another state value, read as the left one is. */
-export type Predicate = [
-  ref: string,
-  negate: boolean,
-  op?: string,
-  literal?: string,
-  compared?: boolean,
-];
+/** A parsed predicate: [ref, negate, op?, literal?]. */
+export type Predicate = [ref: string, negate: boolean, op?: string, literal?: string];
 
 // predicate := ['not'] ref [op literal] — the op split is tokenized, so a
 // quoted literal may contain op characters (`$title == 'a > b'`); the real op
@@ -124,10 +117,7 @@ export const parsePredicate = (spec: string): Predicate => {
     const [ref, lit] = scan(s, [op], 1);
 
     if (lit != null) {
-      const quoted = unquoteLiteral(lit);
-      if (quoted != null) return [ref.trim(), negate, op, quoted];
-      const bare = lit.trim();
-      return [ref.trim(), negate, op, bare, bare[0] === "$"];
+      return [ref.trim(), negate, op, unquoteLiteral(lit) ?? lit.trim()];
     }
   }
 

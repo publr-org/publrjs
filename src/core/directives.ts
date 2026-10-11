@@ -12,15 +12,14 @@ import { matchArm, parseBindings, parseMatch, resolvePath, scan, unquoteLiteral 
 import {
   bindPredicate,
   bindRef,
-  isComposite,
-  isGroup,
+  predicateValue,
   resolveElementValue,
   resolveRef,
   resolveValuePath,
-  specLiterals,
-  specValue,
 } from "./resolve";
 import { writePathOnState } from "./model-paths";
+import { classNames, isSlot } from "./slots";
+import { namesOf } from "../addons/class-merge";
 import { ga, isFn, listen, setIfChanged } from "./util";
 
 const KEY_MODIFIERS: Record<string, string> = {
@@ -106,11 +105,10 @@ export const wireOn = (el: Element, attr: string): void => {
 //                              removes the attribute)
 //   `$value ~ 'fallback'`      the value itself, falling back when null/empty
 //   `$v` / `not $v` / `$n > 2` plain ref or bare predicate
-//   `($spec) { … }`, `'a' + $v`  nested specs (see `specValue` in resolve.ts)
+//   `$e_Row_3(…)`              a compiled expression (`slots.ts`)
 const bindValue = (el: Element, spec: string, write: (value: unknown) => void): void => {
-  // Nested specs (a component re-emitting a prop wire) evaluate as a whole.
-  if (isComposite(spec)) {
-    const read = specValue(el, spec);
+  if (isSlot(spec)) {
+    const read = predicateValue(el, spec);
     effect(() => write(read()));
     return;
   }
@@ -201,7 +199,7 @@ const classListApplier = (el: Element): ((classes: string[]) => void) => {
   let last: string[] = [];
   return (classes) => {
     for (const name of last) el.classList.remove(name);
-    last = classes;
+    last = classes.flatMap(namesOf);
     for (const name of last) el.classList.add(name);
   };
 };
@@ -226,13 +224,13 @@ const bindClassArms = (el: Element, disc: string, arms: Array<[string, string]>)
     for (const [, payload] of arms) {
       if (payload !== matched) {
         for (const name of splitClasses(payload)) {
-          el.classList.remove(name);
+          el.classList.remove(...namesOf(name));
         }
       }
     }
 
     for (const name of splitClasses(matched ?? "")) {
-      el.classList.add(name);
+      el.classList.add(...namesOf(name));
     }
   });
 };
@@ -250,7 +248,7 @@ export const wireShow = (el: Element, attr: string): void => {
     bindPredicate(el, spec, (value) => {
       const hidden = matchArm(arms, value) === "hidden";
 
-      el.classList.toggle("hidden", hidden);
+      for (const name of namesOf("hidden")) el.classList.toggle(name, hidden);
       el.toggleAttribute("hidden", hidden);
     });
   }
@@ -262,22 +260,19 @@ export const wireShow = (el: Element, attr: string): void => {
 //   `$env { a: x, _: y } => {…}`  match — arms swap; `=> { … }` pipes the
 //                                  matched TOKEN into `{$}` template holes
 //   `bg-{$color}`                  bare interpolation — `{$name}` holes only
-//   `($spec)`                      a value spec whose value is the class list
-//                                  (a component's wired `classes` prop): each
-//                                  run removes every other list the spec can
-//                                  produce, so a server-rendered one goes too
+//   `$e_Row_3(…)`, `($path)`        a compiled expression, or a component's wired
+//                                  `classes` prop, whose value is the class list
 export const wireClass = (el: Element, attr: string): void => {
   for (const group of scan(ga(el, attr) || "", [";"])) {
-    if (isGroup(group.trim())) {
-      const read = specValue(el, group);
-      const universe = (specLiterals(group) ?? []).flatMap(splitClasses);
+    // A compiled expression: its value is the class list, swapped against the last
+    // one it applied (the first is what the server rendered).
+    const trimmed = group.trim();
+    const wired = trimmed.startsWith("(") && trimmed.endsWith(")") ? trimmed.slice(1, -1) : null;
+
+    if (isSlot(trimmed) || wired != null) {
+      const read = predicateValue(el, wired ?? trimmed);
       const apply = classListApplier(el);
-      effect(() => {
-        const value = read();
-        const classes = value == null || value === false ? [] : splitClasses(String(value));
-        for (const name of universe) if (!classes.includes(name)) el.classList.remove(name);
-        apply(classes);
-      });
+      effect(() => apply(classNames(read())));
       continue;
     }
 

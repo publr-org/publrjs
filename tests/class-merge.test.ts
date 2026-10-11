@@ -2,9 +2,10 @@
 // jit/src/class_merge.zig's own tests: same scope + the later class owns every
 // property of the earlier one ⇒ the earlier one drops.
 
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TEST_CLASS_GROUPS } from "./helpers";
 import * as jsx from "../src/addons/class-merge";
+import { mergeClasses, nameOf, namesOf, useClassBook } from "../src/addons/class-merge";
 
 beforeEach(async () => {
   jsx.useClassGroups(TEST_CLASS_GROUPS);
@@ -76,5 +77,72 @@ describe("mergeClasses (table-driven)", () => {
     jsx.useClassGroups({ "mt-1": ["base", ["margin-top"]], "mt-2": ["base", ["margin-top"]] });
     expect(merge("mt-1 mt-2")).toBe("mt-2");
     expect(jsx.classGroup("px-0")).toEqual(["base", ["padding-left", "padding-right"]]);
+  });
+});
+
+describe("class book", () => {
+  afterEach(() => useClassBook(null));
+
+  // px-2 / px-4: padding-inline (property 0); p-4: padding (1, covers 0); flex / hidden:
+  // display (2); size-4: width (3) and height (4); w-4 shares size-4's width atom.
+  const book = {
+    classes: [
+      ["px-2", "", [0]],
+      ["px-4", "", [1]],
+      ["p-4", "", [2]],
+      ["flex", "", [3]],
+      ["hidden", "", [4]],
+      ["size-4", "", [5, 6]],
+      ["w-4", "", [5]],
+      ["w-8", "", [7]],
+      ["group/disclosure", "g", []],
+    ],
+    atoms: [
+      ["a", 0, 0],
+      ["b", 0, 0],
+      ["c", 0, 1],
+      ["d", 0, 2],
+      ["e", 0, 2],
+      ["f", 0, 3],
+      ["h", 0, 4],
+      ["i", 0, 3],
+    ],
+    covers: [[1, [0]]],
+  } as const;
+
+  it("writes each class as its declarations' names, a later one of a property winning", () => {
+    useClassBook(book);
+    expect(mergeClasses("flex px-2 px-4")).toBe("d b");
+    expect(mergeClasses("size-4 w-8")).toBe("h i");
+  });
+
+  it("removes the longhands a later shorthand covers", () => {
+    useClassBook(book);
+    expect(mergeClasses("px-2 p-4")).toBe("c");
+    expect(mergeClasses("p-4 px-2")).toBe("c a");
+  });
+
+  it("writes one declaration once, whichever classes hold it", () => {
+    useClassBook(book);
+    expect(mergeClasses("w-4 size-4")).toBe("f h");
+  });
+
+  it("keeps a marker's name and a class it does not hold as they are", () => {
+    useClassBook(book);
+    expect(mergeClasses("group/disclosure flex hand-made")).toBe("d g hand-made");
+  });
+
+  it("reads names as what they stand for", () => {
+    useClassBook(book);
+    expect(mergeClasses("d b hidden")).toBe("b e");
+  });
+
+  it("answers a class's names, or the class without a book", () => {
+    expect(namesOf("size-4")).toEqual(["size-4"]);
+    useClassBook(book);
+    expect(namesOf("size-4")).toEqual(["f", "h"]);
+    expect(nameOf("size-4")).toBe("f h");
+    expect(namesOf("group/disclosure")).toEqual(["g"]);
+    expect(namesOf("hand-made")).toEqual(["hand-made"]);
   });
 });

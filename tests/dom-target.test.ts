@@ -7,6 +7,7 @@ import { useClassGroups } from "../src/addons/class-merge";
 import {
   element,
   append,
+  event,
   attr,
   classes,
   insert,
@@ -223,4 +224,10 @@ it("keeps rows when the source rebuilds equal objects and updates them when a fi
   expect([...ul.children]).toEqual([first, second]);
   expect(rendered).toBeLessThan(12);
   dispose();
+});
+
+it("wires nothing for an absent handler, so an optional prop passed through is safe", () => {
+  const node = document.createElement("textarea");
+  event(node, "change", undefined);
+  expect(() => node.dispatchEvent(new Event("change"))).not.toThrow();
 });

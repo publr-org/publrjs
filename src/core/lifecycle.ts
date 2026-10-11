@@ -109,7 +109,7 @@ const instantiateIslands = (root: ParentNode): void => {
     });
 
     runInScope(scope, () => {
-      const [definition, stateTarget, bindState] = resolveDefinition(factory);
+      const [definition, stateTarget, bindState] = resolveDefinition(factory, el);
       if (!compiledFactories.has(factory)) seedText(el, stateTarget);
 
       tagStore(stateTarget, name, "", container);
@@ -126,6 +126,7 @@ const instantiateIslands = (root: ParentNode): void => {
         watch: definition.watch,
         init: definition.init,
         refs: definition.refs,
+        expressions: definition.expressions,
       });
       const [state, , watch, init] = ref;
 

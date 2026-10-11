@@ -55,6 +55,31 @@ it("adopts the one authored element through Slot and merges props onto it", () =
   dispose();
 });
 
+it("keeps the adopted element's own classes through Slot", () => {
+  const host = document.createElement("div");
+  const dispose = jsx.mount(host, () =>
+    jsx.element("p", (paragraph) => {
+      jsx.append(
+        paragraph,
+        jsx.Slot({
+          class: "",
+          children: [jsx.element("button", (el) => jsx.classes(el, () => "own look"))],
+        }),
+      );
+      jsx.append(
+        paragraph,
+        jsx.Slot({
+          class: "w-full",
+          children: [jsx.element("a", (el) => jsx.classes(el, () => "own"))],
+        }),
+      );
+    }),
+  );
+  expect(host.querySelector("button")!.className).toBe("own look");
+  expect(host.querySelector("a")!.className).toBe("own w-full");
+  dispose();
+});
+
 it("derives initials and gravatar urls the way the server does", () => {
   expect(jsx.initials("dawid urbanski")).toBe("DU");
   expect(jsx.initials("  Ada   Lovelace Byron ")).toBe("AL");
@@ -66,4 +91,36 @@ it("derives initials and gravatar urls the way the server does", () => {
 
 it("exposes the dataset read on the runtime it re-exports", () => {
   expect(jsx.Publr.dataset("anything")).toBeUndefined();
+});
+
+it("keeps a text child live and reads node children once", async () => {
+  const label = state("Draft");
+  let built = 0;
+  const host = document.createElement("div");
+  const dispose = jsx.mount(host, () =>
+    jsx.component(jsx.Dynamic, {
+      as: "p",
+      get children() {
+        return label.read();
+      },
+    } as never),
+  );
+  expect(host.textContent).toBe("Draft");
+  label.write("Saved");
+  await tick();
+  expect(host.textContent).toBe("Saved");
+  dispose();
+  const nodes = document.createElement("div");
+  const disposeNodes = jsx.mount(nodes, () =>
+    jsx.component(jsx.Dynamic, {
+      as: "p",
+      get children() {
+        built += 1;
+        return [document.createElement("b")];
+      },
+    } as never),
+  );
+  await tick();
+  expect(built).toBe(1);
+  disposeNodes();
 });

@@ -1,0 +1,49 @@
+// A store list whose rows are conditionals: `cond && <X/>` as the row and a
+// ternary between two components as the row, beside branches inside a row.
+// Toggling a row and replacing the list must settle, never loop.
+import { Publr } from "publr";
+export const state = Publr.reactive({
+  rows: [
+    { id: 1, on: false },
+    { id: 2, on: true },
+  ],
+});
+export const flip = (id: number) => {
+  const row = state.rows.find((candidate) => candidate.id === id);
+  if (row) row.on = !row.on;
+};
+export const replace = () => {
+  state.rows = state.rows.map((row) => ({ ...row, on: !row.on }));
+};
+export const swap = () => {
+  state.rows = [
+    { id: 2, on: true },
+    { id: 3, on: false },
+  ];
+};
+function Text({ children }: { children: string }) {
+  return <em>{children}</em>;
+}
+export function RowBranches() {
+  return (
+    <div>
+      <button class="replace" onClick={() => replace()}>replace</button>
+      <button class="swap" onClick={() => swap()}>swap</button>
+      <nav>
+        {state.rows.map((row) => (
+          <button key={row.id} onClick={() => flip(row.id)}>{row.id}</button>
+        ))}
+      </nav>
+      <p class="guard">{state.rows.map((row) => row.on && (<span key={row.id}>{row.id}</span>))}</p>
+      <p class="ternary">{state.rows.map((row) => (row.on ? <Text>on</Text> : <Text>off</Text>))}</p>
+      <ul>
+        {state.rows.map((row) => (
+          <li key={row.id}>
+            {row.on && (<span>x</span>)}
+            {row.on ? <Text>on</Text> : <Text>off</Text>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
