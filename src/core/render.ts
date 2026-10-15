@@ -16,6 +16,8 @@ interface Job {
   read: EffectRunner;
   commit: (value: any) => void;
   live: boolean;
+  /** Its reads changed since its last commit (a new job is dirty). */
+  dirty: boolean;
 }
 export interface Region {
   jobs: Set<Job>;
@@ -47,8 +49,11 @@ export function flushRegion(region: Region): void {
   let failure: unknown;
   let failed = false;
   let pending = false;
+  // Only the bindings whose reads changed are read again: a region of thousands
+  // of bindings costs what changed, not what is mounted. A job stays dirty until
+  // its value is committed, so a pending or failed flush reads it again.
   for (const job of region.jobs) {
-    if (!job.live || isScopePaused(job.owner)) continue;
+    if (!job.live || !job.dirty || isScopePaused(job.owner)) continue;
     try {
       staged.push([job, inRegion(region, () => job.read())]);
     } catch (error) {
@@ -68,7 +73,10 @@ export function flushRegion(region: Region): void {
   // made the binding, so what they own and reach (a family's instance) is the
   // binding's, not whatever runs the flush.
   for (const [job, value] of staged)
-    if (job.live) runInScope(job.owner, () => untrack(() => job.commit(value)));
+    if (job.live) {
+      job.dirty = false;
+      runInScope(job.owner, () => untrack(() => job.commit(value)));
+    }
   region.status?.(undefined, false, false);
 }
 function schedule(region: Region): void {
@@ -81,9 +89,16 @@ export function render<T>(read: () => T, commit: (value: T) => void): void {
   const own = !current;
   const job: Job = {
     owner: getActiveScope(),
-    read: effect(read, { lazy: true, scheduler: () => schedule(region) }),
+    read: effect(read, {
+      lazy: true,
+      scheduler: () => {
+        job.dirty = true;
+        schedule(region);
+      },
+    }),
     commit,
     live: true,
+    dirty: true,
   };
   region.jobs.add(job);
   onCleanup(() => {

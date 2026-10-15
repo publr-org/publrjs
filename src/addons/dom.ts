@@ -260,17 +260,22 @@ export function component<P>(make: Component<P>, props: P): Node {
  * A family root's module-level store, refs, helpers and actions, made once per
  * root instance. The compiler wraps those declarations in `make`, the root
  * component calls `create()`, and the forwarded exports the parts import reach
- * the instance of the root they render under through the owner scope. A part
- * rendered without a root shares one orphan instance, as module state would.
+ * the instance of the root they render under through the owner scope. Code
+ * outside every root (an ancestor, an event handler of another component, a
+ * plain module) reaches the most recently created root that is still mounted,
+ * as module state would; only while none is mounted does it share one orphan
+ * instance.
  */
 export function family<T extends object>(name: string, make: () => T) {
   const instances = new WeakMap<Scope, T>();
+  const mounted: T[] = [];
   let orphan: T | undefined;
   const current = (): T => {
     for (let scope = getActiveScope(); scope; scope = scope.parent ?? null) {
       const instance = instances.get(scope);
       if (instance) return instance;
     }
+    if (mounted.length) return mounted[mounted.length - 1];
     orphan ??= runInScope(null, make);
     return orphan;
   };
@@ -281,7 +286,14 @@ export function family<T extends object>(name: string, make: () => T) {
     create(): T {
       const scope = getActiveScope();
       const instance = make();
-      if (scope) instances.set(scope, instance);
+      if (scope) {
+        instances.set(scope, instance);
+        mounted.push(instance);
+        onCleanup(() => {
+          const at = mounted.indexOf(instance);
+          if (at >= 0) mounted.splice(at, 1);
+        });
+      }
       return instance;
     },
     /** The root component: its instance exists before its props are read, so
