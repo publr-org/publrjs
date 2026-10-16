@@ -5,6 +5,7 @@ import {
   effect,
   onCleanup,
   Pending,
+  reportFailure,
   runInScope,
   scheduleRender,
   untrack,
@@ -64,20 +65,34 @@ export function flushRegion(region: Region): void {
       }
     }
   }
-  if (pending || failed) {
-    if (region.status) region.status(failure, pending, failed);
-    else if (failed) throw failure;
+  // A pending read holds the whole region back, and a boundary (Loading) shows
+  // a failure instead of the content. Without a boundary, one failing binding
+  // must not freeze the rest: the others commit, the failure is thrown after
+  // (the scheduler reports it and carries on), and the failed binding stays
+  // dirty so the next flush reads it again.
+  if (pending || (failed && region.status)) {
+    region.status?.(failure, pending, failed);
     return;
   }
+  const errors: unknown[] = failed ? [failure] : [];
   // A commit builds nodes (an insert that turns into markup) in the scope that
   // made the binding, so what they own and reach (a family's instance) is the
   // binding's, not whatever runs the flush.
   for (const [job, value] of staged)
     if (job.live) {
       job.dirty = false;
-      runInScope(job.owner, () => untrack(() => job.commit(value)));
+      try {
+        runInScope(job.owner, () => untrack(() => job.commit(value)));
+      } catch (error) {
+        job.dirty = true;
+        errors.push(error);
+      }
     }
   region.status?.(undefined, false, false);
+  if (errors.length) {
+    for (const error of errors.slice(1)) reportFailure(error);
+    throw errors[0];
+  }
 }
 function schedule(region: Region): void {
   if (region.queued || region.disposed) return;

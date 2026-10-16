@@ -412,6 +412,7 @@ function retire(mounted: Mounted | undefined): void {
       if (node === last) break;
     }
   } else nodes.push(...mounted.nodes);
+  const parents = nodes.map((node) => node.parentNode);
   disposeScope(mounted.scope);
   // Portal cleanup can restore nodes into this span while owners are retired.
   if (first?.parentNode && first.parentNode === last?.parentNode) {
@@ -420,7 +421,13 @@ function retire(mounted: Mounted | undefined): void {
       if (node === last) break;
     }
   }
-  for (const node of nodes) node.remove();
+  // Nodes an insert handed back to the value they came from while the owners
+  // were disposed stay there.
+  nodes.forEach((node, index) => {
+    const parent = node.parentNode;
+    if (index < parents.length && parent !== parents[index] && homes.has(parent!)) return;
+    node.remove();
+  });
 }
 function prepare(make: () => Node, target: Range): Mounted {
   const scope = createScope();
@@ -601,7 +608,8 @@ export function list<T>(
           row.range.start.remove();
           row.range.end.remove();
         }
-      const parent = target.end.parentNode!;
+      const parent = target.end.parentNode;
+      if (!parent) throw new Error("publr-dom: a live list's markers were removed from the DOM");
       const active = target.end.ownerDocument.activeElement as HTMLElement | null;
       let position = target.start.nextSibling;
       for (const row of next.values()) {
@@ -785,11 +793,49 @@ export function hydrate<P>(
 }
 export { render };
 
+/** A fragment handed in as a value (a component's `children`, built once where the
+ * component starts and shown by a branch that comes and goes) lends its nodes to the
+ * insert that places them. The insert hands them back when it lets go, so the value
+ * can show again, and the bindings inside it, owned by whoever built them, always
+ * have a parent to commit into. */
+interface Loan {
+  home: DocumentFragment;
+  first: ChildNode;
+  last: ChildNode;
+}
+const homes = new WeakSet<Node>();
+let loans: Loan[] | undefined;
 /** One child value as a node: a node itself, a thunk as its own region, text otherwise. */
 function child(value: unknown): Node {
   if (typeof value === "function") return insert(value as () => unknown);
-  if (value && typeof value === "object" && "nodeType" in value) return value as Node;
+  if (value && typeof value === "object" && "nodeType" in value) {
+    const node = value as Node;
+    if (loans && !cursor && node.nodeType === 11 && node.firstChild) {
+      homes.add(node);
+      loans.push({ home: node as DocumentFragment, first: node.firstChild, last: node.lastChild! });
+    }
+    return node;
+  }
   return literal(value);
+}
+/** Retires what an insert placed, first handing lent nodes back to their fragments. */
+function release(mounted: Mounted | undefined, lent: Loan[]): void {
+  if (mounted && lent.length) {
+    const returned = new Set<Node>();
+    for (const { home, first, last } of lent) {
+      const parent = first.parentNode;
+      if (!parent || parent === home || parent !== last.parentNode) continue;
+      const nodes: ChildNode[] = [];
+      for (let node: ChildNode | null = first; node; node = node.nextSibling) {
+        nodes.push(node);
+        if (node === last) break;
+      }
+      for (const node of nodes) returned.add(node);
+      home.append(...nodes);
+    }
+    mounted.nodes = mounted.nodes.filter((node) => !returned.has(node));
+  }
+  retire(mounted);
 }
 /** The compiler hands several children as an array, with a thunk for each
  * reactive expression among them. Under a hydration cursor each child has
@@ -816,6 +862,7 @@ export function insert(read: () => unknown): Node {
   // are mounted lazily in their own owner and retire on replacement.
   const target = range("insert");
   let mounted: Mounted | undefined;
+  let lent: Loan[] = [];
   let previous: unknown = Symbol();
   let initial = true;
   render(read, (value) => {
@@ -829,13 +876,23 @@ export function insert(read: () => unknown): Node {
     ) {
       (mounted.nodes[0] as Text).data = display(value);
     } else {
-      retire(mounted);
-      mounted = build(make, target, initial && target.adopted);
+      release(mounted, lent);
+      mounted = undefined;
+      lent = [];
+      const borrowed: Loan[] = [];
+      const outer = loans;
+      loans = borrowed;
+      try {
+        mounted = build(make, target, initial && target.adopted);
+      } finally {
+        loans = outer;
+      }
+      lent = borrowed;
     }
     previous = value;
     initial = false;
   });
-  onCleanup(() => retire(mounted));
+  onCleanup(() => release(mounted, lent));
   return target.output;
 }
 

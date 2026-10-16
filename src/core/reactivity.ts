@@ -131,8 +131,23 @@ export const trigger = (
   changeNotifier?.(target, key, oldValue, newValue);
 };
 
+/** Reports an error without stopping the caller: the browser's `reportError` (the
+ * console and `error` listeners), else an uncaught throw on a later microtask. */
+export const reportFailure = (error: unknown): void => {
+  const report = (globalThis as { reportError?: (error: unknown) => void }).reportError;
+  if (typeof report === "function") report(error);
+  else
+    queueMicrotask(() => {
+      throw error;
+    });
+};
+
 const flush = (): void => {
   let lastLabels = "reactive render";
+  // A render or post job that throws must not stop the others (a region that
+  // never runs stays queued and never updates again): every job runs, then the
+  // first failure is thrown and the rest are reported.
+  const failures: unknown[] = [];
   try {
     while (pendingEffects.size || renderJobs.size || postJobs.size) {
       if (++flushDepth > MAX_FLUSH_DEPTH) {
@@ -150,7 +165,12 @@ const flush = (): void => {
         const jobs = renderJobs.size ? renderJobs : postJobs;
         const batch = [...jobs];
         jobs.clear();
-        for (const job of batch) job();
+        for (const job of batch)
+          try {
+            job();
+          } catch (error) {
+            failures.push(error);
+          }
         continue;
       }
       const batch = [...pendingEffects];
@@ -172,6 +192,10 @@ const flush = (): void => {
   } finally {
     flushScheduled = false;
     flushDepth = 0;
+  }
+  if (failures.length) {
+    for (const error of failures.slice(1)) reportFailure(error);
+    throw failures[0];
   }
 };
 
