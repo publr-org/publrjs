@@ -119,6 +119,10 @@ export interface PublrRuntime {
 
   // ── Installed by the publr-router addon (absent until it loads) ──────────
   router?<TMeta = unknown>(options: RouterOptions<TMeta>): Router<TMeta>;
+
+  // ── Installed by the publr-operations addon inside a plugin's frame ──────
+  /** The view's `ctx` in the browser: who is looking, the page, and its reads and writes. */
+  ctx?: unknown;
 }
 
 /** The Publr global runtime API. */
