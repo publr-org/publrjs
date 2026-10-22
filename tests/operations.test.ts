@@ -18,7 +18,7 @@ describe("operations", () => {
     vi.stubGlobal("fetch", fetched);
     expect(await send("lms.add_chapter", { title: "Going live" })).toEqual({ id: "a1" });
     const [address, init] = fetched.mock.calls[0] as unknown as [string, RequestInit];
-    expect(address).toBe("/api/lms/add_chapter");
+    expect(address).toBe("/api/lms.add_chapter");
     expect((init.headers as Record<string, string>)["X-Csrf-Token"]).toBe("token-1");
     expect(JSON.parse(init.body as string)).toEqual({ title: "Going live" });
   });
@@ -64,8 +64,8 @@ describe("operations", () => {
   it("reads GROQ through record.query and refetches a read after a write", async () => {
     let reads = 0;
     const fetched = vi.fn(async (address: string) => {
-      if (address === "/api/record/query") reads += 1;
-      const body = address === "/api/record/query" ? { result: [{ title: `read ${reads}` }] } : {};
+      if (address === "/api/record.query") reads += 1;
+      const body = address === "/api/record.query" ? { result: [{ title: `read ${reads}` }] } : {};
       return { ok: true, status: 200, json: async () => body } as unknown as Response;
     });
     vi.stubGlobal("fetch", fetched);
@@ -103,7 +103,7 @@ describe("seeded reads", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (address: string) => {
-        if (address === "/api/notes/list") reads += 1;
+        if (address === "/api/notes.list") reads += 1;
         return {
           ok: true,
           status: 200,
