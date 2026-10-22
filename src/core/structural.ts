@@ -173,6 +173,8 @@ export const setupFor = (el: Element, attr: string): void => {
   }
 
   const alias = spec.slice(0, ofIndex).trim();
+  // `.map((item, i) => …)`: each row's store also holds its position, under this name.
+  const position = specOf(tpl, source, "data-p-index") || "";
   const keyAttr = specOf(tpl, source, "data-p-key") || "";
   const subject = spec.slice(ofIndex + 4).trim();
   let read: () => unknown;
@@ -223,13 +225,17 @@ export const setupFor = (el: Element, attr: string): void => {
           state[alias] = item;
         }
 
+        if (position && state[position] !== index) {
+          state[position] = index;
+        }
+
         if (previousNode.nextSibling !== entry[0]) {
           parent.insertBefore(entry[0], previousNode.nextSibling);
         }
       } else {
         const prepare = (node: PublrElement) => {
           node.setAttribute(STORE_ATTR, alias);
-          node._ps = [reactive({ [alias]: item }), {}];
+          node._ps = [reactive(position ? { [alias]: item, [position]: index } : { [alias]: item }), {}];
         };
         const serverNode = initial.get(key);
         if (serverNode) {
