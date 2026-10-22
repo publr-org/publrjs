@@ -1,5 +1,5 @@
 // Publr's operations from the browser: `call` writes through one, `query` reads one or a GROQ
-// query, reactively. On an admin page they go to `/api/<namespace>/<verb>` with the page's
+// query, reactively. On an admin page they go to `/api/<plugin>.<verb>` with the page's
 // token; inside a plugin's frame, where there is no session, through the frame's bridge to
 // the admin, which runs only what the plugin may. A component cannot tell which.
 // Through the core entry, so the core stays one file (dist/publr.js) for every addon.
@@ -80,9 +80,8 @@ async function post(path: string, body: unknown): Promise<unknown> {
 export function send(operation: string, input: unknown): Promise<unknown> {
   const via = bridge();
   if (via) return via.call(operation, input);
-  const dot = operation.indexOf(".");
-  if (dot <= 0) return Promise.reject(new Error(`publr: "${operation}" is not an operation name`));
-  return post(`/api/${operation.slice(0, dot)}/${operation.slice(dot + 1)}`, input);
+  if (operation.indexOf(".") <= 0) return Promise.reject(new Error(`publr: "${operation}" is not an operation name`));
+  return post(`/api/${operation}`, input);
 }
 
 /** Reads a GROQ query: through the bridge as the frame's plugin, else as the person. */
