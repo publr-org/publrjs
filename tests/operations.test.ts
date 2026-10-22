@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { call, groq, query, send } from "../src/addons/operations";
+import { call, groq, query, Refused, send } from "../src/addons/operations";
 import { tick } from "./helpers";
 
 const answered = (body: unknown, ok = true, status = 200) =>
@@ -44,6 +44,21 @@ describe("operations", () => {
     const save = call("lms.set_course");
     expect(await save({ title: "x".repeat(200) })).toBeUndefined();
     expect((save.error as Error).message).toBe("Too long");
+  });
+
+  it("refuses with every problem beside its field", async () => {
+    const problems = [
+      { field: "name", message: "A name is 1 to 80 characters." },
+      { field: "message", message: "Write a message." },
+    ];
+    vi.stubGlobal("fetch", answered({ error: "Invalid", problems }, false, 422));
+    const sign = call("guestbook.sign");
+    expect(await sign({ name: "" })).toBeUndefined();
+    const refused = sign.error as Refused;
+    expect(refused).toBeInstanceOf(Refused);
+    expect(refused.code).toBe("Invalid");
+    expect(refused.problems).toEqual(problems);
+    expect(refused.message).toBe("A name is 1 to 80 characters. Write a message.");
   });
 
   it("reads GROQ through record.query and refetches a read after a write", async () => {

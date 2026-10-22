@@ -40,6 +40,22 @@ const bridge = (): Bridge | undefined => (globalThis as unknown as { publr?: Bri
 const csrf = (): string =>
   document.querySelector('meta[name="publr-csrf"]')?.getAttribute("content") ?? "";
 
+/** One thing wrong with a call's input, beside its field. */
+export type Problem = { field: string; message: string };
+
+/** A refused call: `code` is the answer's `error` (`Invalid`, `NotEnoughStock`), `problems`
+ * says what was wrong with each field when the input was refused. */
+export class Refused extends Error {
+  readonly code: string;
+  readonly problems: Problem[];
+  constructor(code: string, message: string, problems: Problem[] = []) {
+    super(message);
+    this.name = "Refused";
+    this.code = code;
+    this.problems = problems;
+  }
+}
+
 async function post(path: string, body: unknown): Promise<unknown> {
   const response = await fetch(underBase(path), {
     method: "POST",
@@ -47,9 +63,16 @@ async function post(path: string, body: unknown): Promise<unknown> {
     headers: { "Content-Type": "application/json", "X-Csrf-Token": csrf() },
     body: JSON.stringify(body ?? {}),
   });
-  const answer = (await response.json().catch(() => ({}))) as { message?: string; error?: string };
-  if (!response.ok)
-    throw new Error(answer.message ?? answer.error ?? `refused (${response.status})`);
+  const answer = (await response.json().catch(() => ({}))) as {
+    message?: string;
+    error?: string;
+    problems?: Problem[];
+  };
+  if (!response.ok) {
+    const problems = Array.isArray(answer.problems) ? answer.problems : [];
+    const told = answer.message ?? problems.map((problem) => problem.message).join(" ");
+    throw new Refused(answer.error ?? "Refused", told || answer.error || `refused (${response.status})`, problems);
+  }
   return answer;
 }
 
