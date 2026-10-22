@@ -28,7 +28,7 @@ describe("operations", () => {
     vi.stubGlobal("fetch", fetched);
     const asked: unknown[] = [];
     (globalThis as { publr?: unknown }).publr = {
-      call: async (operation: string, input: unknown) => {
+      send: async (operation: string, input: unknown) => {
         asked.push([operation, input]);
         return { position: 2 };
       },
