@@ -205,9 +205,13 @@ export function event(
   node.addEventListener(name, listener);
   onCleanup(() => node.removeEventListener(name, listener));
 }
+/** The ref is let go in the scope that set it: a family's ref (a stand-in reaching the
+ * instance of the scope it is called in) clears its own instance's, not whichever
+ * instance is current while a subtree is disposed. */
 export function reference(node: Element, ref: (element: Element | null) => void): void {
+  const owner = getActiveScope();
   ref(node);
-  onCleanup(() => ref(null));
+  onCleanup(() => runInScope(owner, () => ref(null)));
 }
 /** The class stack is merged the way the server merges it: a later utility
  * replaces an earlier one it conflicts with. */

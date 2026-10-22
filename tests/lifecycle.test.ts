@@ -361,6 +361,52 @@ describe("portal", () => {
     expect(panel.style.left).toBe("220px");
   });
 
+  it("finds the trigger through the wrappers nested conditions leave, within its family", async () => {
+    Publr.createLocalStore("menu-nested", () => ({ state: {}, actions: {} }));
+    html(`
+      <div id="other" data-p-store="menu-nested">
+        <button id="other-trigger" data-p-anchor></button>
+      </div>
+      <div id="root" data-p-store="menu-nested">
+        <button id="trigger" data-p-anchor></button>
+        <span class="contents"><span class="contents">
+          <div id="panel" data-p-portal data-p-position="left"></div>
+        </span></span>
+      </div>
+      <div id="lone" data-p-store="menu-nested">
+        <span><div id="orphan" data-p-portal data-p-position="left"></div></span>
+      </div>
+    `);
+    const trigger = $("#trigger");
+    const panel = $("#panel");
+    const orphan = $("#orphan");
+    (trigger as any).getBoundingClientRect = () => ({
+      top: 100,
+      right: 300,
+      bottom: 140,
+      left: 200,
+      width: 100,
+      height: 40,
+    });
+    (panel as any).getBoundingClientRect = () => ({
+      top: 0,
+      right: 0,
+      bottom: 60,
+      left: 0,
+      width: 80,
+      height: 60,
+    });
+
+    Publr.hydrate(document);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+    expect(panel.parentElement?.id).toBe("publr-portal");
+    expect(panel.style.top).toBe("144px");
+    expect(panel.style.left).toBe("200px");
+    // No trigger in its own family: it is not placed by another menu's.
+    expect(orphan.style.top).toBe("");
+  });
+
   it("remeasures after trigger or panel sizing changes", async () => {
     let notifyResize = () => {};
     const observe = vi.fn();
@@ -426,7 +472,7 @@ describe("portal", () => {
     }
   });
 
-  it("positions an opening panel on its next animation frame", async () => {
+  it("positions an opening panel before its first frame, so it is never seen or hovered unplaced", async () => {
     Publr.createLocalStore("menu-open-position", () => ({ state: {}, actions: {} }));
     html(`
       <div id="root" data-p-store="menu-open-position">
@@ -455,24 +501,10 @@ describe("portal", () => {
 
     Publr.hydrate(document);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    let positionFrame: FrameRequestCallback | undefined;
-    const deferredFrame = vi
-      .spyOn(window, "requestAnimationFrame")
-      .mockImplementation((callback) => {
-        positionFrame = callback;
-        return 41;
-      });
-
     try {
       panel.hidden = false;
       trigger.setAttribute("aria-expanded", "true");
       await tick();
-
-      expect(panel.style.top).toBe("");
-      expect(panel.style.left).toBe("");
-      expect(deferredFrame).toHaveBeenCalled();
-
-      positionFrame!(0);
 
       expect(panel.style.top).toBe("142px");
       expect(panel.style.left).toBe("220px");
@@ -480,7 +512,6 @@ describe("portal", () => {
       expect(panel.dataset.placement).toBe("bottom-end");
     } finally {
       Publr.destroy($("#root"));
-      deferredFrame.mockRestore();
     }
   });
 

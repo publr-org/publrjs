@@ -24,6 +24,27 @@ const authoredParent = (element: PublrElement): Element | null => {
   return saved?.nodeType === Node.ELEMENT_NODE ? (saved as Element) : element.parentElement;
 };
 
+/** The trigger a floating part opens from: the first `data-p-anchor` around where it was
+ * written, looking out from its authored parent through any wrappers a condition left
+ * (a branch nested in another is wrapped in a span) up to its family's root, never past
+ * it, so a menu never takes another menu's trigger. */
+const authoredAnchor = (element: PublrElement): Element | null => {
+  for (let at = authoredParent(element); at; at = at.parentElement) {
+    const found = at.querySelector("[data-p-anchor]");
+    if (found) return found;
+    if (at.hasAttribute("data-p-store")) return null;
+  }
+  return null;
+};
+
+/** `node` is `root` or inside it as authored: a portaled element (a submenu moved to the
+ * body) counts as inside the element it was written in, so a press in it is not outside. */
+const within = (root: Node, node: Node): boolean => {
+  for (let at: Node | null = node; at; at = ((at as PublrElement)._pp?.[0] as Node | null | undefined) ?? at.parentNode)
+    if (at === root) return true;
+  return false;
+};
+
 export const wirePosition = (element: Element, attr: string): void => {
   const floating = element as PublrElement;
   const doc = floating.ownerDocument;
@@ -42,7 +63,7 @@ export const wirePosition = (element: Element, attr: string): void => {
 
   const onPointerDown = (event: PointerEvent): void => {
     if (!isVisible() || !(event.target instanceof Node)) return;
-    if (enabled && !floating.contains(event.target) && !anchor?.contains(event.target))
+    if (enabled && !within(floating, event.target) && !anchor?.contains(event.target))
       dismiss("pointer");
   };
 
@@ -84,9 +105,12 @@ export const wirePosition = (element: Element, attr: string): void => {
     frame = raf(view, update);
   };
 
+  // Shown or changed: placed now, before the next paint or pointer event, so it is never
+  // seen (or hovered) where it stood unplaced for a frame.
   const observer = new view.MutationObserver(() => {
     configure();
-    schedule();
+    if (frame) cancelRaf(view, frame);
+    update();
   });
   observer.observe(floating, {
     attributes: true,
@@ -102,7 +126,7 @@ export const wirePosition = (element: Element, attr: string): void => {
       typeof value === "object" && value !== null ? (value as PositionBinding) : null;
     const nextAnchor = explicit
       ? resolveTarget(floating, explicit.anchor)
-      : (authoredParent(floating)?.querySelector("[data-p-anchor]") ?? null);
+      : authoredAnchor(floating);
     if (anchor !== nextAnchor) {
       if (anchor) resizeObserver?.unobserve(anchor);
       anchor = nextAnchor;
