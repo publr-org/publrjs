@@ -21,16 +21,28 @@ const bagFor = ([state, actions]: StoreRef, path: string): object | null => {
   return state && top in state ? state : actions && top in actions ? actions : null;
 };
 
+/** The nearest element at or above `el` (following portal back-links) whose store
+ * is named `name`, or null. */
+export const enclosingStore = (el: Element, name: string): PublrElement | null => {
+  for (let node: Element | null = el; node?.getAttribute;) {
+    if (ga(node, STORE_ATTR) === name) return node as PublrElement;
+    const portalParent: ParentNode | null | undefined = (node as PublrElement)._pp?.[0];
+    node = portalParent instanceof Element ? portalParent : node.parentElement;
+  }
+
+  return null;
+};
+
 /**
  * Walk the store chain upward from `el` (following portal back-links so
  * portaled content resolves through its AUTHORED position — same law as React
  * portals) and return [owning store, bare path].
  *
- * A qualified `store::path` ref bypasses that chain and addresses a shared
- * store explicitly. The optional `$` state sigil applies to the whole ref:
+ * A qualified `store::path` ref names its store: the nearest enclosing store of
+ * that name (an action handed to a component that draws it inside a store of
+ * its own, which may have an action of the same name), else the shared store.
+ * The optional `$` state sigil applies to the whole ref:
  * `$cms::permissions.canEdit` and `cms::permissions.canEdit` are equivalent.
- * Local factories are deliberately excluded because one factory name may
- * identify many island instances; local refs continue to resolve by ancestry.
  *
  * Unqualified refs fall back to a shared store named by the whole ref, then to
  * the innermost store.
@@ -47,7 +59,9 @@ export const resolveRef = (ref: string, el: Element): [store: StoreRef | null, r
     const storeName = bare.slice(0, qualifier);
     const path = bare.slice(qualifier + 2);
 
-    return path ? [sharedStores.get(storeName) ?? null, path] : [null, path];
+    if (!path) return [null, path];
+
+    return [enclosingStore(el, storeName)?._ps ?? sharedStores.get(storeName) ?? null, path];
   }
 
   let first: StoreRef | null = null;
