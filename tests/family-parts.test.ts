@@ -41,8 +41,8 @@ it("gives every part the root's instance and the module's private values", async
   await tick();
   expect(items(b!)).toEqual(["#1:1"]);
   expect(items(a!)).toEqual(["#1:1", "#2:1"]);
-  // Nothing outside a root was touched: the orphan instance is still fresh.
-  expect(state.picks).toBe(0);
+  // Outside every root the module's state is the latest mounted root's: b's.
+  expect(state.picks).toBe(1);
   dispose();
 });
 
@@ -59,13 +59,19 @@ it("mounts a later insert's nodes under the owner, so they reach the root's inst
     );
   });
   const host = document.createElement("div");
-  const dispose = mount(host, () => component(Late, {}));
-  expect(host.textContent).toBe("none");
+  const dispose = mount(host, () =>
+    element("main", (main) => {
+      append(main, component(Late, {}));
+      append(main, component(Late, {}));
+    }),
+  );
+  const [a, b] = [...host.querySelectorAll("p")];
+  expect(a!.textContent).toBe("none");
+  (state as { count: number }).count = 1; // outside every root: the latest, b
   shown.on = true;
   await tick();
-  expect(host.textContent).toBe("count 7");
-  (state as { count: number }).count = 1; // outside any root: the orphan
-  await tick();
-  expect(host.textContent).toBe("count 7");
+  // a's insert, built after the change, reads a's own instance, not the latest.
+  expect(a!.textContent).toBe("count 7");
+  expect(b!.textContent).toBe("count 1");
   dispose();
 });

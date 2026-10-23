@@ -81,6 +81,26 @@ describe("data-p-on", () => {
     expect(editorSave).not.toHaveBeenCalled();
   });
 
+  it("a qualified ref reaches the nearest enclosing local store of that name", async () => {
+    const pageToggle = vi.fn();
+    const menuToggle = vi.fn();
+    Publr.createLocalStore("page", () => ({ state: {}, actions: { toggle: pageToggle } }));
+    Publr.createLocalStore("menu", () => ({ state: {}, actions: { toggle: menuToggle } }));
+    html(`
+      <section data-p-store="page">
+        <div data-p-store="menu" data-p-on="click:toggle">
+          <button id="b" data-p-on="click.stop:page::toggle"></button>
+        </div>
+      </section>
+    `);
+    Publr.hydrate(document);
+    await tick();
+
+    $("#b").click();
+    expect(pageToggle).toHaveBeenCalledTimes(1);
+    expect(menuToggle).not.toHaveBeenCalled();
+  });
+
   it("falls back to a function stored in state", async () => {
     const fn = vi.fn();
     Publr.createStore("app", () => ({ state: { handler: fn }, actions: {} }));
