@@ -87,6 +87,31 @@ describe("data-p-for", () => {
     expect(labels()).toEqual(["Alpha", "Beta"]);
   });
 
+  it("keeps each row's position under data-p-index as rows move", async () => {
+    const state = rt.reactive({
+      items: [
+        { id: 1, label: "Alpha" },
+        { id: 2, label: "Beta" },
+      ],
+    });
+    Publr.createStore("app", () => ({ state, actions: {} }));
+    html(`
+      <div data-p-store="app">
+        <ul id="list">
+          <template data-p-for="item of $items" data-p-index="i" data-p-key="item.id">
+            <li data-p-text="i"></li>
+          </template>
+        </ul>
+      </div>
+    `);
+    Publr.hydrate(document);
+    await tick();
+    expect(labels()).toEqual(["0", "1"]);
+    state.items = [state.items[1], state.items[0], { id: 3, label: "Gamma" }];
+    await tick();
+    expect(labels()).toEqual(["0", "1", "2"]);
+  });
+
   it("qualified list refs bypass the nearest store", async () => {
     const cms = Publr.createStore("cms", () => ({
       state: { items: [{ id: 1, label: "CMS item" }] },
