@@ -1,18 +1,26 @@
 // Publr's operations from the browser: `call` writes through one, `query` reads one or a GROQ
 // query, reactively. On an admin page they go to `/api/<plugin>.<verb>` with the page's
 // token; inside a plugin's frame, where there is no session, through the frame's bridge to
-// the admin, which runs only what the plugin may. A component cannot tell which.
+// the admin, which runs only the plugin's own operations, as the person looking. There a
+// view reads them from its `ctx` (`Publr.ctx`): `ctx.query(name, input)`, `ctx.call(name)`.
 // Through the core entry, so the core stays one file (dist/publr.js) for every addon.
-import { awaited, mutation } from "../publr";
+import { awaited, mutation, Publr } from "../publr";
 import type { AwaitedResult } from "../intrinsics";
 import type { MutationResult } from "../core/mutation";
 import { browserCache } from "../core/query-cache";
 import { url as underBase } from "../core/base";
 
+/** Who is looking at a plugin's page, and the page: its path among the plugin's pages and
+ * its query string. */
+export type Person = { name: string; email: string };
+export type Page = { path: string; query: string };
+
 /** The frame's bridge (`window.publr`), present only inside a plugin's frame. */
 type Bridge = {
-  call(operation: string, input: unknown): Promise<unknown>;
-  query?(query: string, params: unknown): Promise<unknown>;
+  person: Person;
+  page: Page;
+  send(operation: string, input: unknown): Promise<unknown>;
+  navigate(path: string): void;
 };
 
 /** Every operation a page may name, with its input and output: filled in by each plugin's
@@ -71,7 +79,11 @@ async function post(path: string, body: unknown): Promise<unknown> {
   if (!response.ok) {
     const problems = Array.isArray(answer.problems) ? answer.problems : [];
     const told = answer.message ?? problems.map((problem) => problem.message).join(" ");
-    throw new Refused(answer.error ?? "Refused", told || answer.error || `refused (${response.status})`, problems);
+    throw new Refused(
+      answer.error ?? "Refused",
+      told || answer.error || `refused (${response.status})`,
+      problems,
+    );
   }
   return answer;
 }
@@ -79,15 +91,14 @@ async function post(path: string, body: unknown): Promise<unknown> {
 /** Runs one operation by name with its input, wherever the page is. */
 export function send(operation: string, input: unknown): Promise<unknown> {
   const via = bridge();
-  if (via) return via.call(operation, input);
+  if (via) return via.send(operation, input);
   if (operation.indexOf(".") <= 0) return Promise.reject(new Error(`publr: "${operation}" is not an operation name`));
   return post(`/api/${operation}`, input);
 }
 
-/** Reads a GROQ query: through the bridge as the frame's plugin, else as the person. */
+/** Reads a GROQ query as the person (`record.query`); a plugin's frame reads its own
+ * operations instead. */
 function read(query: Groq, params: unknown): Promise<unknown> {
-  const via = bridge();
-  if (via?.query) return via.query(query.groq, params);
   const input = { query: query.groq, params: JSON.stringify(params ?? {}), perspective: "all" };
   return send("record.query", input).then((answer) => (answer as { result: unknown }).result);
 }
@@ -152,4 +163,25 @@ export function query<T>(
     // Kept until a write invalidates it; the ttl only bounds a page left open.
     cache: { ttl: 300_000, tags: [written] },
   });
+}
+
+/** A view's `ctx` in the browser, as its props carry it on the server. */
+export type ViewCtx = {
+  person: Person;
+  page: Page;
+  query: typeof query;
+  call: typeof call;
+  navigate(path: string): void;
+};
+
+const framed = bridge();
+if (framed) {
+  const ctx: ViewCtx = {
+    person: framed.person,
+    page: framed.page,
+    query,
+    call,
+    navigate: (path) => framed.navigate(path),
+  };
+  Publr.ctx = ctx;
 }
