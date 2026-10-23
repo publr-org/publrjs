@@ -19,9 +19,19 @@ export type Page = { path: string; query: string };
 type Bridge = {
   person: Person;
   page: Page;
+  /** In a field kind's editor: the field's value, its problems and options. */
+  editor?: Editor;
   send(operation: string, input: unknown): Promise<unknown>;
   navigate(path: string): void;
+  /** Hands the editor's value to the form it sits in. */
+  change(value: unknown): void;
+  /** Set here: called with the field's problems when a save is refused. */
+  refused?: (problems: string[]) => void;
 };
+
+/** What a field kind's editor is told: the value (null on a new record), what is wrong
+ * with it, and the field's options. */
+export type Editor = { value: unknown; problems: string[]; options: Record<string, unknown> };
 
 /** Every operation a page may name, with its input and output: filled in by each plugin's
  * generated `ui/operations.d.ts` (`publr plugin build`), so names and fields are checked. */
@@ -174,6 +184,10 @@ export type ViewCtx = {
   navigate(path: string): void;
 };
 
+/** A field kind's editor's `ctx`: a view's, with the value it edits, its problems and
+ * options, and `change(value)`, which hands a new value to the form. */
+export type EditorCtx = ViewCtx & Editor & { change(value: unknown): void };
+
 const framed = bridge();
 if (framed) {
   const ctx: ViewCtx = {
@@ -183,5 +197,23 @@ if (framed) {
     call,
     navigate: (path) => framed.navigate(path),
   };
-  Publr.ctx = ctx;
+  const editor = framed.editor;
+  if (editor) {
+    const edited: EditorCtx = Publr.reactive({
+      ...ctx,
+      value: editor.value,
+      problems: editor.problems,
+      options: editor.options,
+      change(value: unknown) {
+        edited.value = value;
+        framed.change(value);
+      },
+    });
+    framed.refused = (problems) => {
+      edited.problems = problems;
+    };
+    Publr.ctx = edited;
+  } else {
+    Publr.ctx = ctx;
+  }
 }
