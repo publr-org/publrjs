@@ -133,6 +133,11 @@ export const slotValue = (
         if (argument) return argument();
         const storeName = entry!.stores[key];
         if (storeName) return storeNamed(el, storeName)?.[0];
+        // A ref (a submenu placed beside its trigger): the nearest store's that has it.
+        for (const [, store] of storesAbove(el)) {
+          const refs = store[4] as Record<string, unknown> | undefined;
+          if (refs && key in refs) return refs[key];
+        }
         return readPath(el, key);
       },
     },
