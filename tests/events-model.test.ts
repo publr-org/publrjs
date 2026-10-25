@@ -101,6 +101,22 @@ describe("data-p-on", () => {
     expect(menuToggle).not.toHaveBeenCalled();
   });
 
+  it("a qualified ref passes an enclosing store of its name that does not hold it", async () => {
+    const shared = vi.fn();
+    Publr.createStore("nav", () => ({ state: {}, actions: { open: shared } }));
+    Publr.createLocalStore("nav", () => ({ state: {}, actions: {} }));
+    html(`
+      <section data-p-store="nav">
+        <button id="b" data-p-on="click:nav::open"></button>
+      </section>
+    `);
+    Publr.hydrate(document);
+    await tick();
+
+    $("#b").click();
+    expect(shared).toHaveBeenCalledTimes(1);
+  });
+
   it("falls back to a function stored in state", async () => {
     const fn = vi.fn();
     Publr.createStore("app", () => ({ state: { handler: fn }, actions: {} }));

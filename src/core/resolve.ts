@@ -39,8 +39,9 @@ export const enclosingStore = (el: Element, name: string): PublrElement | null =
  * portals) and return [owning store, bare path].
  *
  * A qualified `store::path` ref names its store: the nearest enclosing store of
- * that name (an action handed to a component that draws it inside a store of
- * its own, which may have an action of the same name), else the shared store.
+ * that name when it holds the path (an action handed to a component that draws it
+ * inside a store of its own, which may have an action of the same name), else the
+ * shared store.
  * The optional `$` state sigil applies to the whole ref:
  * `$cms::permissions.canEdit` and `cms::permissions.canEdit` are equivalent.
  *
@@ -61,7 +62,14 @@ export const resolveRef = (ref: string, el: Element): [store: StoreRef | null, r
 
     if (!path) return [null, path];
 
-    return [enclosingStore(el, storeName)?._ps ?? sharedStores.get(storeName) ?? null, path];
+    // The enclosing store answers only what it holds: a component's own store named like a
+    // shared one (a `navigation` component inside the `navigation` store) does not hide it.
+    const enclosing = enclosingStore(el, storeName)?._ps ?? null;
+    const shared = sharedStores.get(storeName) ?? null;
+    const holds = (store: StoreRef | null) =>
+      !!store && (!!bagFor(store, path) || (!!store[1] && path in store[1]));
+
+    return [holds(enclosing) || !shared ? enclosing ?? shared : shared, path];
   }
 
   let first: StoreRef | null = null;
