@@ -27,6 +27,8 @@ type Bridge = {
   change(value: unknown): void;
   /** Set here: called with the field's problems when a save is refused. */
   refused?: (problems: string[]) => void;
+  /** Set here: in a field's help, called with the field's value as the form now holds it. */
+  told?: (value: unknown) => void;
 };
 
 /** What a field kind's editor is told: the value (null on a new record), what is wrong
@@ -185,7 +187,9 @@ export type ViewCtx = {
 };
 
 /** A field kind's editor's `ctx`: a view's, with the value it edits, its problems and
- * options, and `change(value)`, which hands a new value to the form. */
+ * options, and `change(value)`, which hands a new value to the form. A field's help (a
+ * panel under a field) gets the same `ctx`, its `value` the field's as the form holds it,
+ * changing as the person types. */
 export type EditorCtx = ViewCtx & Editor & { change(value: unknown): void };
 
 const framed = bridge();
@@ -211,6 +215,9 @@ if (framed) {
     });
     framed.refused = (problems) => {
       edited.problems = problems;
+    };
+    framed.told = (value) => {
+      edited.value = value;
     };
     Publr.ctx = edited;
   } else {
