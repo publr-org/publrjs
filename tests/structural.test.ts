@@ -403,6 +403,49 @@ describe("server-rendered structural regions", () => {
     ]);
   });
 
+  it("keeps a row's own store when the row is a component with one, its alias read after it", async () => {
+    // A field's help frames: `(editor.panels[field.name] ?? []).map((panel) => <PluginPanel … />)`.
+    const editor = rt.reactive({
+      panels: { note: [{ src: "/a" }], title: [] as Array<{ src: string }> },
+    });
+    Publr.createLocalStore("editor", () => ({ state: editor, actions: {} }));
+    Publr.createLocalStore("panel", () => {
+      const state = rt.reactive({ heights: {} as Record<string, number> });
+      return {
+        state,
+        actions: {
+          received: (_dataset: unknown, context: any) => {
+            state.heights = { ...state.heights, [String(context.event.data)]: 120 };
+          },
+        },
+        expressions: {
+          e_Panel_2: ({ src }: { src: string }) => `height:${state.heights[src] || 96}px`,
+        },
+      };
+    });
+    Publr.expressions(
+      { editor: "editor" },
+      { e_Fields_1: ({ editor, field }: any) => editor.panels[field.name] ?? [] },
+    );
+    const frame = (src: string, key = "") =>
+      `<iframe data-p-store="panel"${key} src="${src}" data-p-on="message.window:received" data-p-bind="src:$panel.src;style:$e_Panel_2(src: $panel.src)"></iframe>`;
+    const list = (name: string, rows: string) =>
+      `<li>${name}<template data-p-template="Fields-1" data-p-for="panel of $e_Fields_1(field: {&quot;name&quot;:&quot;${name}&quot;})">${frame("")}</template>${rows}</li>`;
+    html(
+      `<form data-p-store="editor"><ul>${list("note", frame("/a", ' data-p-for-key="0"'))}${list("title", "")}</ul></form>`,
+    );
+    Publr.hydrate(document);
+    await tick();
+    editor.panels.title = [{ src: "/b" }];
+    await tick();
+    const frames = $$("li > iframe") as HTMLIFrameElement[];
+    expect(frames.map((el) => el.getAttribute("src"))).toEqual(["/a", "/b"]);
+    expect(frames.map((el) => el.getAttribute("style"))).toEqual(["height:96px", "height:96px"]);
+    window.dispatchEvent(new MessageEvent("message", { data: "/b" }));
+    await tick();
+    expect(frames.map((el) => el.getAttribute("style"))).toEqual(["height:96px", "height:120px"]);
+  });
+
   it("adopts a conditional island, retains it while true, and releases it when removed", async () => {
     let mounts = 0;
     let releases = 0;

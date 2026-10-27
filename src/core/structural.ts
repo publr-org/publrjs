@@ -11,10 +11,10 @@ import { createScope, disposeScope, effect, onCleanup, runInScope } from "./reac
 import { resolvePath, stripStatePrefix } from "./parse";
 import { bindPredicate, resolveRef } from "./resolve";
 import { isSlot, slotValue } from "./slots";
-import { STORE_ATTR } from "./store";
+import { ROW_ATTR, STORE_ATTR } from "./store";
 import { hydrate, destroy } from "./lifecycle";
 import { ga } from "./util";
-import type { PublrElement, Scope } from "./types";
+import type { PublrElement, Scope, StoreRef } from "./types";
 
 /** A mounted clone: [node, scope]. */
 type Rendered = [PublrElement, Scope];
@@ -219,7 +219,7 @@ export const setupFor = (el: Element, attr: string): void => {
       let entry = rendered.get(key);
 
       if (entry) {
-        const state = entry[0]._ps![0];
+        const state = (entry[0]._pw ?? entry[0]._ps)![0];
 
         if (state[alias] !== item) {
           state[alias] = item;
@@ -234,8 +234,19 @@ export const setupFor = (el: Element, attr: string): void => {
         }
       } else {
         const prepare = (node: PublrElement) => {
+          const row: StoreRef = [
+            reactive(position ? { [alias]: item, [position]: index } : { [alias]: item }),
+            {},
+          ];
+          // A row that is a component with a store of its own keeps that store; the row's
+          // scope goes beside it, read after it.
+          if (node.hasAttribute(STORE_ATTR)) {
+            node.setAttribute(ROW_ATTR, alias);
+            node._pw = row;
+            return;
+          }
           node.setAttribute(STORE_ATTR, alias);
-          node._ps = [reactive(position ? { [alias]: item, [position]: index } : { [alias]: item }), {}];
+          node._ps = row;
         };
         const serverNode = initial.get(key);
         if (serverNode) {

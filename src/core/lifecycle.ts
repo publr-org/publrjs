@@ -34,7 +34,7 @@ import { wirePortal } from "./portal";
 import { wirePosition } from "./position";
 import { wireRef } from "./ref";
 import { wireFocus } from "./focus";
-import { enclosingStore } from "./resolve";
+import { insideIsland } from "./resolve";
 import { ga, isFn } from "./util";
 import type { PublrElement } from "./types";
 
@@ -376,7 +376,7 @@ export const hydrate = (
 
       let waiting = false;
       for (const match of (ga(el, attr) ?? "").matchAll(/\$?([A-Za-z_][\w-]*)::/g)) {
-        if (!containerFor(el).shared.has(match[1]) && !enclosingStore(el, match[1])) {
+        if (!containerFor(el).shared.has(match[1]) && !insideIsland(el, match[1])) {
           rememberPending(match[1], el);
           waiting = true;
         }

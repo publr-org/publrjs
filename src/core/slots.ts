@@ -17,8 +17,7 @@ import { evaluateAt } from "./evaluating";
 import { containerFor } from "./container";
 import { scan } from "./parse";
 import { resolveRef, resolveValuePath } from "./resolve";
-import { STORE_ATTR } from "./store";
-import { ga } from "./util";
+import { storesOn } from "./store";
 import type { PublrElement, StoreRef } from "./types";
 
 export type Expression = (scope: Record<string, unknown>) => unknown;
@@ -44,15 +43,12 @@ export const isSlot = (spec: string): boolean => SLOT.test(spec.trim());
 
 // The store chain from `el` up, portals followed back to where they were authored:
 // [element carrying the store, its store].
-function* storesAbove(el: Element): Generator<[Element, StoreRef]> {
+function* storesAbove(el: Element): Generator<[Element, string, StoreRef]> {
   const shared = containerFor(el).shared;
   let node: Element | null = el;
 
   while (node?.getAttribute) {
-    const name = ga(node, STORE_ATTR);
-    const store = name ? ((node as PublrElement)._ps ?? shared.get(name)) : null;
-
-    if (store) yield [node, store];
+    for (const [name, store] of storesOn(node, shared)) yield [node, name, store];
 
     const portalParent: ParentNode | null | undefined = (node as PublrElement)._pp?.[0];
     node = portalParent instanceof Element ? portalParent : node.parentElement;
@@ -60,7 +56,7 @@ function* storesAbove(el: Element): Generator<[Element, StoreRef]> {
 }
 
 const find = (el: Element, name: string): Registered | undefined => {
-  for (const [, store] of storesAbove(el)) {
+  for (const [, , store] of storesAbove(el)) {
     const run = store[5]?.[name];
     if (run) return { run, stores: {} };
   }
@@ -69,8 +65,8 @@ const find = (el: Element, name: string): Registered | undefined => {
 };
 
 const storeNamed = (el: Element, storeName: string): StoreRef | undefined => {
-  for (const [node, store] of storesAbove(el)) {
-    if (ga(node, STORE_ATTR) === storeName) return store;
+  for (const [, name, store] of storesAbove(el)) {
+    if (name === storeName) return store;
   }
 
   return containerFor(el).shared.get(storeName);
@@ -134,7 +130,7 @@ export const slotValue = (
         const storeName = entry!.stores[key];
         if (storeName) return storeNamed(el, storeName)?.[0];
         // A ref (a submenu placed beside its trigger): the nearest store's that has it.
-        for (const [, store] of storesAbove(el)) {
+        for (const [, , store] of storesAbove(el)) {
           const refs = store[4] as Record<string, unknown> | undefined;
           if (refs && key in refs) return refs[key];
         }

@@ -8,7 +8,7 @@ import { containerFor } from "./container";
 import { HTML_STORE } from "./symbols";
 import { effect } from "./reactivity";
 import { render } from "./render";
-import { STORE_ATTR } from "./store";
+import { STORE_ATTR, storesOn } from "./store";
 import { evaluatePredicate, parsePredicate, resolvePath, stripStatePrefix } from "./parse";
 import { isSlot, slotValue } from "./slots";
 import { ga } from "./util";
@@ -21,11 +21,27 @@ const bagFor = ([state, actions]: StoreRef, path: string): object | null => {
   return state && top in state ? state : actions && top in actions ? actions : null;
 };
 
-/** The nearest element at or above `el` (following portal back-links) whose store
- * is named `name`, or null. */
-export const enclosingStore = (el: Element, name: string): PublrElement | null => {
+const noShared = new Map<string, StoreRef>();
+
+/** Whether an island named `name` is at or above `el` (following portal back-links),
+ * hydrated or not. */
+export const insideIsland = (el: Element, name: string): boolean => {
   for (let node: Element | null = el; node?.getAttribute;) {
-    if (ga(node, STORE_ATTR) === name) return node as PublrElement;
+    if (ga(node, STORE_ATTR) === name) return true;
+    const portalParent: ParentNode | null | undefined = (node as PublrElement)._pp?.[0];
+    node = portalParent instanceof Element ? portalParent : node.parentElement;
+  }
+
+  return false;
+};
+
+/** The nearest store named `name` at or above `el` (following portal back-links): an
+ * island's, or a list row's; null when none. */
+export const enclosingStore = (el: Element, name: string): StoreRef | null => {
+  for (let node: Element | null = el; node?.getAttribute;) {
+    for (const [named, store] of storesOn(node, noShared)) {
+      if (named === name) return store;
+    }
     const portalParent: ParentNode | null | undefined = (node as PublrElement)._pp?.[0];
     node = portalParent instanceof Element ? portalParent : node.parentElement;
   }
@@ -64,31 +80,25 @@ export const resolveRef = (ref: string, el: Element): [store: StoreRef | null, r
 
     // The enclosing store answers only what it holds: a component's own store named like a
     // shared one (a `navigation` component inside the `navigation` store) does not hide it.
-    const enclosing = enclosingStore(el, storeName)?._ps ?? null;
+    const enclosing = enclosingStore(el, storeName);
     const shared = sharedStores.get(storeName) ?? null;
     const holds = (store: StoreRef | null) =>
       !!store && (!!bagFor(store, path) || (!!store[1] && path in store[1]));
 
-    return [holds(enclosing) || !shared ? enclosing ?? shared : shared, path];
+    return [holds(enclosing) || !shared ? (enclosing ?? shared) : shared, path];
   }
 
   let first: StoreRef | null = null;
   let node: Element | null = el;
 
   while (node?.getAttribute) {
-    const name = ga(node, STORE_ATTR);
+    for (const [, store] of storesOn(node, sharedStores)) {
+      first ??= store;
 
-    if (name) {
-      const store = (node as PublrElement)._ps ?? sharedStores.get(name);
-
-      if (store) {
-        first ??= store;
-
-        // bagFor probes the top segment; the extra `in actions` check also
-        // matches action keys that literally contain dots.
-        if (bagFor(store, bare) || (store[1] && bare in store[1])) {
-          return [store, bare];
-        }
+      // bagFor probes the top segment; the extra `in actions` check also
+      // matches action keys that literally contain dots.
+      if (bagFor(store, bare) || (store[1] && bare in store[1])) {
+        return [store, bare];
       }
     }
 

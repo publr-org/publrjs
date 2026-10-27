@@ -241,6 +241,9 @@ export interface Router<TMeta = unknown> {
 export interface PublrElement extends HTMLElement {
   /** Island store ref (local-factory islands and @for row islands). */
   _ps?: StoreRef | null;
+  /** A list row's scope on a row whose root is an island of its own (`data-p-row`): the
+   * row is around the island, so it is read after the island's store. */
+  _pw?: StoreRef | null;
   /** Island sCope — effects/cleanups torn down on unmount. */
   _pc?: Scope | null;
   /** Structural template already bound (data-p-for). */

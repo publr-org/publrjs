@@ -16,6 +16,7 @@ import type {
   Actions,
   CreatedStore,
   LocalStoreDefinition,
+  PublrElement,
   State,
   StoreDefinition,
   StoreDefinitionFactory,
@@ -25,6 +26,23 @@ import type {
 } from "./types";
 
 export const STORE_ATTR = "data-p-store";
+/** A list row's alias on a row root that is an island of its own (`_pw` holds the row). */
+export const ROW_ATTR = "data-p-row";
+
+/** The stores an element carries, innermost first, by name: its island's, then the list
+ * row's when the row's root is that island. A shared store's island has no `_ps` of its
+ * own until hydrated; `shared` answers for it. */
+export function* storesOn(
+  node: Element,
+  shared: Map<string, StoreRef>,
+): Generator<[name: string, store: StoreRef]> {
+  const el = node as PublrElement;
+  const name = node.getAttribute(STORE_ATTR);
+  const own = name ? (el._ps ?? shared.get(name)) : null;
+  if (name && own) yield [name, own];
+  const row = el._pw ? node.getAttribute(ROW_ATTR) : null;
+  if (row && el._pw) yield [row, el._pw];
+}
 
 import { browserStores, defaultStores, containerFor, StoreContainer } from "./container";
 
@@ -182,15 +200,17 @@ export const resolveDefinition = <
   ];
 };
 
+const noShared = new Map<string, StoreRef>();
+
 /** The state of the nearest island named `name` around `root` (portals followed back to
  * where they were authored), else the container's shared store of that name. */
 const stateAbove = (root: Element, name: string): State | undefined => {
   let node: Element | null = root.parentElement;
 
   while (node?.getAttribute) {
-    const store = (node as Element & { _ps?: StoreRef | null })._ps;
-
-    if (store && node.getAttribute(STORE_ATTR) === name) return store[0];
+    for (const [named, store] of storesOn(node, noShared)) {
+      if (named === name) return store[0];
+    }
 
     const back: ParentNode | null | undefined = (node as Element & { _pp?: [ParentNode] })._pp?.[0];
     node = back instanceof Element ? back : node.parentElement;
