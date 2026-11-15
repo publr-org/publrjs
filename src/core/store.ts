@@ -78,10 +78,31 @@ export const deepMerge = (target: any, source: any): void => {
 };
 
 /** Deep-merge a JSON payload into (the raw target of) `state`. Bad JSON is a no-op. */
+/** A root's `data-p` seed without what is not state: keys starting with `$` are the
+ * component's props (`$props`, or one `$<prop>` each) and its cache metadata. */
+const seedState = (seed: Record<string, unknown>): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(seed).filter(([key]) => !key.startsWith("$")));
+
+/** The props a root's seed carries for its store: `$props`, and each `$<prop>` beside the state. */
+export const seedProps = (jsonText: string | null | undefined): Record<string, unknown> => {
+  if (!jsonText) return {};
+  try {
+    const seed = JSON.parse(jsonText);
+    if (!seed || typeof seed !== "object" || Array.isArray(seed)) return {};
+    const props: Record<string, unknown> = { ...(seed.$props ?? {}) };
+    for (const [key, value] of Object.entries(seed)) {
+      if (key.startsWith("$") && key !== "$props" && key !== "$cache") props[key.slice(1)] = value;
+    }
+    return props;
+  } catch {
+    return {};
+  }
+};
+
 export const applyInlineSeed = (state: any, jsonText: string | null | undefined): void => {
   if (jsonText) {
     try {
-      deepMerge(unwrap(state), JSON.parse(jsonText));
+      deepMerge(unwrap(state), seedState(JSON.parse(jsonText)));
     } catch {}
   }
 };
@@ -185,7 +206,8 @@ export const resolveDefinition = <
     },
   }) as S;
   const above = (name: string): State | undefined => (root ? stateAbove(root, name) : undefined);
-  const [definition, start] = prepareStore(() => factory({ state, above }));
+  const props = root ? seedProps(root.getAttribute("data-p")) : {};
+  const [definition, start] = prepareStore(() => factory({ state, above, props }));
   const target = (definition.state ?? {}) as S;
 
   current = target;

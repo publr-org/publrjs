@@ -21,7 +21,17 @@ export function readSeed<P = Record<string, unknown>>(
   const payload = JSON.parse(text);
   if (!payload || typeof payload !== "object" || Array.isArray(payload))
     throw new Error("publr: invalid component seed");
-  const { $props: props, $cache: cache, ...values } = payload;
+  const { $props: given, $cache: cache, ...rest } = payload;
+  // Each `$<prop>` beside the state is a prop too, as `$props` holds them.
+  const values: Record<string, unknown> = {};
+  let props: Record<string, unknown> | undefined = given;
+  for (const [key, value] of Object.entries(rest)) {
+    if (!key.startsWith("$")) {
+      values[key] = value;
+      continue;
+    }
+    props = { ...props, [key.slice(1)]: value };
+  }
   const seed = { values, props: props as P | undefined, cache };
   validateSeed(seed);
   return seed;

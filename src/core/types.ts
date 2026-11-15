@@ -119,6 +119,9 @@ export interface StoreContext<S extends State = State> {
   /** The state of the nearest island of the store `name` around this one: a family's
    * part that keeps a store of its own reads its family's through it. */
   above?: (name: string) => State | undefined;
+  /** The component's props its root's seed carries (`$<prop>` or `$props`), for the code
+   * that reads them past the state's first values. */
+  props?: Record<string, unknown>;
 }
 
 export type ActionsFactory<S extends State = State, A extends Actions = Actions> = (
