@@ -1,4 +1,4 @@
-import { url, urlAttributes } from "./base";
+import { address, urlAttributes } from "./base";
 import { setDirectiveValue } from "./directive-value";
 import { setFocusScope, ownFocusScope } from "./focus";
 import { replaceHtml } from "./lifecycle";
@@ -365,7 +365,7 @@ const setBoundAttribute = (el: Element, attr: string, value: unknown): void => {
   }
 
   if (urlAttributes.has(attr) && typeof value === "string") {
-    el.setAttribute(attr, url(value));
+    el.setAttribute(attr, address(value));
     return;
   }
 

@@ -25,6 +25,16 @@ export const needsBase = (base: string, value: string): boolean => {
   return !(rest === "" || rest[0] === "/" || rest[0] === "?" || rest[0] === "#");
 };
 
+/** Whether following `value` would run it as a script (`javascript:`, `vbscript:`), read as
+ * a browser reads it: leading spaces and control characters skipped, tabs and line breaks
+ * inside the scheme ignored, any case. The same rule as the server's renders. */
+export const runsScript = (value: string): boolean =>
+  /^(javascript|vbscript):/i.test(value.replace(/[\t\n\r]/g, "").replace(/^[\u0000-\u0020]+/, ""));
+
+/** What a bound URL attribute carries: `value` under the page's base, or `#` in place of an
+ * address that would run as a script, since a bound address is often content. */
+export const address = (value: string): string => (runsScript(value) ? "#" : url(value));
+
 /** `path` under the page's base: `Publr.url("/api/records")`. */
 export const url = (path: string): string => {
   const base = basePath();

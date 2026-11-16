@@ -53,8 +53,14 @@ export const localStores = new Map<
   StoreDefinitionFactory<any, any, LocalStoreDefinition>
 >();
 
+/** Keys that reach an object's prototype: a payload never merges into one, or JSON from a
+ * page or a server could change every object there is. */
+const prototypeKeys: ReadonlySet<string> = new Set(["__proto__", "constructor", "prototype"]);
+
 export const deepMerge = (target: any, source: any): void => {
   for (const key in source) {
+    if (prototypeKeys.has(key)) continue;
+
     const sourceValue = source[key];
     const targetValue = target[key];
 

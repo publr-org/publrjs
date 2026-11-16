@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it } from "vitest";
-import { needsBase, path, url } from "../src/core/base";
+import { address, needsBase, path, runsScript, url } from "../src/core/base";
 
 describe("base path", () => {
   afterEach(() => document.documentElement.removeAttribute("data-publr-base"));
@@ -21,6 +21,16 @@ describe("base path", () => {
     document.documentElement.setAttribute("data-publr-base", "/environments/dev");
     expect(url("/api/records")).toBe("/environments/dev/api/records");
     expect(url("/environments/dev/admin")).toBe("/environments/dev/admin");
+  });
+
+  it("never binds an address that would run as a script", () => {
+    expect(runsScript("javascript:alert(1)")).toBe(true);
+    expect(runsScript(" \u0001JaVa\tScr\nipt:alert(1)")).toBe(true);
+    expect(runsScript("vbscript:x")).toBe(true);
+    expect(runsScript("/javascript:alert(1)")).toBe(false);
+    expect(runsScript("https://example.com/?next=javascript:1")).toBe(false);
+    expect(address("javascript:alert(1)")).toBe("#");
+    expect(address("/posts")).toBe("/posts");
   });
 
   it("takes the base back off a path the browser shows", () => {

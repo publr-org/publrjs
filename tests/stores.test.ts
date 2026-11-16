@@ -12,6 +12,22 @@ beforeEach(async () => {
 });
 
 describe("Publr.createStore — shared stores", () => {
+  it("never merges a seed into an object's prototype", async () => {
+    html(
+      '<script id="publr-state-polluted" type="application/json">' +
+        '{"count":1,"__proto__":{"polluted":true},"nested":{"constructor":{"prototype":{"polluted":true}}}}' +
+        "</script>",
+    );
+    const store = Publr.createStore("polluted", ({ state }) => ({
+      state: { count: 0, nested: {} as Record<string, unknown>, ...state },
+    }));
+
+    await tick();
+    expect(store.count).toBe(1);
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(Object.prototype, "polluted")).toBe(false);
+  });
+
   it("initializes seeded state once and keeps effects alive after consumers leave", async () => {
     html('<script id="publr-state-session" type="application/json">{"count":4}</script>');
     const seen = vi.fn();
