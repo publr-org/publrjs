@@ -6,6 +6,7 @@ import { t, tn, tx } from "./core/translate";
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { path, url } from "./core/base";
+import { answered, pages, send } from "./core/api";
 import { state } from "./intrinsics";
 import { createStoreContainer } from "./core/store";
 import { RAW, tagStore } from "./core/symbols";
@@ -109,6 +110,12 @@ export interface PublrRuntime {
   url: typeof url;
   path: typeof path;
 
+  /** Publr's REST API: `send(operation, input)` answers the operation's answer, `answered`
+   * it with `meta` beside it, `pages` each page of one answering a page at a time. */
+  send: typeof send;
+  answered: typeof answered;
+  pages: typeof pages;
+
   /** The message in the reader's language: `t("Save")`, `tx("verb", "Post")`,
    * `tn("{count} file", "{count} files", n)`, each with optional `{ name: value }`. */
   t: typeof t;
@@ -157,6 +164,10 @@ export const Publr: PublrRuntime = {
   url,
   /** A path the browser shows, without the page's base: what the site calls it. */
   path,
+
+  send,
+  answered,
+  pages,
 
   t,
   tx,

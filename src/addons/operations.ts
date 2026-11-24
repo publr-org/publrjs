@@ -8,7 +8,9 @@ import { awaited, mutation, Publr } from "../publr";
 import type { AwaitedResult } from "../intrinsics";
 import type { MutationResult } from "../core/mutation";
 import { browserCache } from "../core/query-cache";
-import { url as underBase } from "../core/base";
+import { send as sendApi, Refused, type Problem } from "../core/api";
+
+export { Refused, type Problem };
 
 /** Who is looking at a plugin's page, and the page: its path among the plugin's pages and
  * its query string. */
@@ -29,6 +31,8 @@ type Bridge = {
   refused?: (problems: string[]) => void;
   /** Set here: in a field's help, called with the field's value as the form now holds it. */
   told?: (value: unknown) => void;
+  /** Set here: called when a record a read of the page read changed elsewhere. */
+  changed?: () => void;
 };
 
 /** What a field kind's editor is told: the value (null on a new record), what is wrong
@@ -57,61 +61,29 @@ const written = "operations";
 
 const bridge = (): Bridge | undefined => (globalThis as unknown as { publr?: Bridge }).publr;
 
-const csrf = (): string =>
-  document.querySelector('meta[name="publr-csrf"]')?.getAttribute("content") ?? "";
-
-/** One thing wrong with a call's input, beside its field. */
-export type Problem = { field: string; message: string };
-
-/** A refused call: `code` is the answer's `error` (`Invalid`, `NotEnoughStock`), `problems`
- * says what was wrong with each field when the input was refused. */
-export class Refused extends Error {
-  readonly code: string;
-  readonly problems: Problem[];
-  constructor(code: string, message: string, problems: Problem[] = []) {
-    super(message);
-    this.name = "Refused";
-    this.code = code;
-    this.problems = problems;
-  }
-}
-
-async function post(path: string, body: unknown): Promise<unknown> {
-  const response = await fetch(underBase(path), {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json", "X-Csrf-Token": csrf() },
-    body: JSON.stringify(body ?? {}),
-  });
-  const answer = (await response.json().catch(() => ({}))) as {
-    message?: string;
-    error?: string;
-    problems?: Problem[];
-  };
-  if (!response.ok) {
-    const problems = Array.isArray(answer.problems) ? answer.problems : [];
-    const told = answer.message ?? problems.map((problem) => problem.message).join(" ");
-    throw new Refused(
-      answer.error ?? "Refused",
-      told || answer.error || `refused (${response.status})`,
-      problems,
-    );
-  }
-  return answer;
-}
-
 /** Runs one operation by name with its input, wherever the page is. */
 export function send(operation: string, input: unknown): Promise<unknown> {
   const via = bridge();
-  if (via) return via.send(operation, input);
-  if (operation.indexOf(".") <= 0) return Promise.reject(new Error(`publr: "${operation}" is not an operation name`));
-  return post(`/api/${operation}`, input);
+  // The frame's bridge rejects with the refusal's code and field problems beside its
+  // message: the same `Refused` a page outside a frame gets.
+  if (via) {
+    return via
+      .send(operation, input)
+      .catch((error: { message?: string; code?: string; problems?: Problem[] }) => {
+        throw new Refused(
+          error.code || "Refused",
+          String(error.message ?? ""),
+          Array.isArray(error.problems) ? error.problems : [],
+        );
+      });
+  }
+  return sendApi(operation, input);
 }
 
 /** Reads a GROQ query as the person (`record.query`); a plugin's frame reads its own
  * operations instead. */
 function read(query: Groq, params: unknown): Promise<unknown> {
-  const input = { query: query.groq, params: JSON.stringify(params ?? {}), perspective: "all" };
+  const input = { query: query.groq, params: params ?? {}, perspective: "all" };
   return send("record.query", input).then((answer) => (answer as { result: unknown }).result);
 }
 
@@ -201,6 +173,9 @@ if (framed) {
     call,
     navigate: (path) => framed.navigate(path),
   };
+  // A record the page's reads read changed elsewhere (an order turning paid): every read
+  // runs again, as after a write.
+  framed.changed = () => browserCache.invalidate(written);
   const editor = framed.editor;
   if (editor) {
     const edited: EditorCtx = Publr.reactive({

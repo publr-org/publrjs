@@ -14,7 +14,7 @@ afterEach(() => {
 describe("operations", () => {
   it("posts an operation to its /api address with the page's token", async () => {
     document.head.innerHTML = '<meta name="publr-csrf" content="token-1">';
-    const fetched = answered({ id: "a1" });
+    const fetched = answered({ result: { id: "a1" }, meta: {} });
     vi.stubGlobal("fetch", fetched);
     expect(await send("lms.add_chapter", { title: "Going live" })).toEqual({ id: "a1" });
     const [address, init] = fetched.mock.calls[0] as unknown as [string, RequestInit];
@@ -65,7 +65,10 @@ describe("operations", () => {
     let reads = 0;
     const fetched = vi.fn(async (address: string) => {
       if (address === "/api/record.query") reads += 1;
-      const body = address === "/api/record.query" ? { result: [{ title: `read ${reads}` }] } : {};
+      const body =
+        address === "/api/record.query"
+          ? { result: { result: [{ title: `read ${reads}` }] }, meta: {} }
+          : { result: {}, meta: {} };
       return { ok: true, status: 200, json: async () => body } as unknown as Response;
     });
     vi.stubGlobal("fetch", fetched);
@@ -107,7 +110,7 @@ describe("seeded reads", () => {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ entries: [] }),
+          json: async () => ({ result: { entries: [] }, meta: {} }),
         } as unknown as Response;
       }),
     );
